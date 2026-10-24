@@ -69,13 +69,14 @@ export const OptimizerPage: React.FC<OptimizerPageProps> = ({ selectedRegion }) 
 
   useEffect(() => {
     fetchInitialSetup();
-  }, []);
+  }, [selectedRegion]);
 
   const fetchInitialSetup = async () => {
     try {
+      const q = selectedRegion !== 'All' ? `?region=${selectedRegion}` : '';
       const [whRes, destRes, planRes] = await Promise.all([
-        fetch('/api/warehouses'),
-        fetch('/api/forecast/destinations'),
+        fetch(`/api/warehouses${q}`),
+        fetch(`/api/forecast/destinations${q}`),
         fetch('/api/optimize/plans')
       ]);
 
@@ -86,10 +87,10 @@ export const OptimizerPage: React.FC<OptimizerPageProps> = ({ selectedRegion }) 
       if (whJson.success) setWarehouses(whJson.data);
       if (destJson.success) setDestinations(destJson.data);
 
-      if (planJson.success && planJson.data.length > 0) {
+      if (planJson.success && planJson.data.length > 0 && selectedRegion === 'All') {
         setPlan(planJson.data[0]);
       } else {
-        // Run first optimization automatically so the page is populated
+        // Run optimization for this region automatically so the page is populated
         executeOptimizationRun();
       }
     } catch (err) {
@@ -106,6 +107,7 @@ export const OptimizerPage: React.FC<OptimizerPageProps> = ({ selectedRegion }) 
         body: JSON.stringify({
           planningHorizonDays: horizonDays,
           selectedCategories,
+          selectedRegion: selectedRegion !== 'All' ? selectedRegion : undefined,
           transportationWeight,
           stockoutWeight,
           expiryWeight,
@@ -576,6 +578,7 @@ export const OptimizerPage: React.FC<OptimizerPageProps> = ({ selectedRegion }) 
               recommendations={plan?.recommendations || []}
               onRunOptimization={executeOptimizationRun}
               isOptimizing={loading}
+              selectedRegion={selectedRegion}
             />
           ) : (
             <NetworkScene3D

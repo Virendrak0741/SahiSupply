@@ -14,8 +14,12 @@ const OSM_ATTRIBUTION = "Data © OpenStreetMap contributors, ODbL 1.0. Public Ge
 // GET /api/locations — Filterable real geographic locations
 router.get("/", (req, res) => {
   try {
-    const { state, city, category, type, search, riskOnly, hasColdChain, hasPharmaLicense } = req.query;
+    const { state, city, category, type, search, riskOnly, hasColdChain, hasPharmaLicense, region } = req.query;
     let list = [...activeRealLocations];
+
+    if (region && region !== "All") {
+      list = list.filter(loc => loc.region === region);
+    }
 
     if (state && state !== "All") {
       list = list.filter(loc => loc.state.toLowerCase().includes(state.toLowerCase()));

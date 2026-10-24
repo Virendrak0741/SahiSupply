@@ -6,8 +6,9 @@ const Store = require("../models/store");
 // GET /api/warehouses
 router.get("/", (req, res) => {
   try {
-    const warehouses = Store.getWarehouses();
-    const batches = Store.getBatches();
+    const region = req.query.region;
+    const warehouses = Store.getWarehouses(region);
+    const batches = Store.getBatches(region);
     const shipments = Store.getShipments();
 
     const data = warehouses.map(wh => {

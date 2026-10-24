@@ -121,13 +121,31 @@ const Store = {
     return db.products[idx];
   },
 
-  getWarehouses: () => loadDatabase().warehouses,
+  getWarehouses: (region) => {
+    const list = loadDatabase().warehouses;
+    if (region && region !== "All") {
+      return list.filter(w => w.region === region);
+    }
+    return list;
+  },
   getWarehouseById: (id) => loadDatabase().warehouses.find(w => w.id === id),
 
-  getDestinations: () => loadDatabase().destinations,
+  getDestinations: (region) => {
+    const list = loadDatabase().destinations;
+    if (region && region !== "All") {
+      return list.filter(d => d.region === region);
+    }
+    return list;
+  },
   getDestinationById: (id) => loadDatabase().destinations.find(d => d.id === id),
 
-  getBatches: () => loadDatabase().inventoryBatches,
+  getBatches: (region) => {
+    const list = loadDatabase().inventoryBatches;
+    if (region && region !== "All") {
+      return list.filter(b => b.warehouseRegion === region);
+    }
+    return list;
+  },
   getBatchById: (id) => loadDatabase().inventoryBatches.find(b => b.id === id),
   createBatch: (batch) => {
     const db = loadDatabase();

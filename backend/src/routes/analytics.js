@@ -1,40 +1,57 @@
-// SahiSupply AI — Executive Dashboard Analytics & Reports Routes
+// SahiSupply AI — Executive Dashboard Analytics & Multi-Regional Control Tower
 const express = require("express");
 const router = express.Router();
 const Store = require("../models/store");
+const { REGIONAL_PROFILES } = require("../data/datasetGenerator");
 
-// GET /api/analytics/dashboard
+// GET /api/analytics/dashboard — Multi-Regional Analytics & KPI Feeds
 router.get("/dashboard", (req, res) => {
   try {
-    const products = Store.getProducts();
-    const warehouses = Store.getWarehouses();
-    const batches = Store.getBatches();
-    const history = Store.getDemandHistory();
-    const shipments = Store.getShipments();
+    const requestedRegion = req.query.region || "All";
+    const isAll = requestedRegion === "All";
+
+    const allProducts = Store.getProducts();
+    const allWarehouses = Store.getWarehouses();
+    const allDestinations = Store.getDestinations();
+    const allBatches = Store.getBatches();
+    const allHistory = Store.getDemandHistory();
+    const allShipments = Store.getShipments();
     const plans = Store.getDistributionPlans();
 
-    // 1. Calculate the 6 Primary Executive KPI Cards
+    // Filter datasets according to region
+    const warehouses = isAll ? allWarehouses : allWarehouses.filter(w => w.region === requestedRegion);
+    const destinations = isAll ? allDestinations : allDestinations.filter(d => d.region === requestedRegion);
+    const batches = isAll ? allBatches : allBatches.filter(b => b.warehouseRegion === requestedRegion);
+    const history = isAll ? allHistory : allHistory.filter(h => h.region === requestedRegion);
+    const shipments = isAll
+      ? allShipments
+      : allShipments.filter(s => s.destinationRegion === requestedRegion || s.sourceRegion === requestedRegion);
+
+    // 1. Calculate the 6 Primary Executive KPI Cards for the region
     const totalInventoryUnits = batches.reduce((s, b) => s + b.availableQuantity, 0);
 
-    // Forecast demand next 7 days based on recent daily demand rate across all SKUs
-    const recent30Days = history.slice(-500);
-    const avgDailyRate = recent30Days.reduce((s, h) => s + h.quantityDemanded, 0) / 30;
+    // 7-day forecast demand based on historical demand rate in this region
+    const recentHistory = history.slice(-Math.min(1000, history.length));
+    const recentTotalDemand = recentHistory.reduce((s, h) => s + h.quantityDemanded, 0);
+    const uniqueDays = Math.max(1, new Set(recentHistory.map(h => h.date)).size);
+    const avgDailyRate = recentTotalDemand / uniqueDays;
     const forecastDemandNext7Days = Math.round(avgDailyRate * 7 * 1.05);
 
-    // Stockout risk locations: destinations with low days of supply
-    const lowStockBatches = batches.filter(b => b.inventoryStatus === "Low Stock" || b.inventoryStatus === "Critical");
-    const stockoutRiskLocationsCount = 12; // Identified critical points in regional network
+    // High & Medium stockout risk destinations in this region
+    const stockoutRiskDestinations = destinations.filter(d => d.stockoutRiskLevel === "High" || d.stockoutRiskLevel === "Medium");
+    const stockoutRiskLocationsCount = stockoutRiskDestinations.length;
 
-    // Inventory at expiry risk (< 30 days)
+    // Inventory at expiry risk (< 30 days) in this region
     const expiryRiskUnits = batches
       .filter(b => b.daysUntilExpiry > 0 && b.daysUntilExpiry <= 30)
       .reduce((s, b) => s + b.availableQuantity, 0);
 
-    // Estimated active freight expenditure
-    const estimatedTransportationCostINR = shipments.reduce((s, shp) => s + (shp.estimatedTransportationCostINR || 0), 0) + 185000;
+    // Active transportation cost in this region
+    const regionalFreightBase = isAll ? 245000 : requestedRegion === "North" ? 78000 : requestedRegion === "West" ? 92000 : requestedRegion === "South" ? 64000 : 38000;
+    const estimatedTransportationCostINR = shipments.reduce((s, shp) => s + (shp.estimatedTransportationCostINR || 0), 0) + regionalFreightBase;
 
     // Allocation efficiency
-    const allocationEfficiency = 88.4;
+    const allocationEfficiency = requestedRegion === "North" ? 91.2 : requestedRegion === "West" ? 94.8 : requestedRegion === "South" ? 93.4 : requestedRegion === "East" ? 88.6 : 92.5;
 
     // 2. Charts Data
 
@@ -47,16 +64,21 @@ router.get("/dashboard", (req, res) => {
     const demandVsInventoryByCategory = categories.map(cat => {
       const catBatches = batches.filter(b => b.category === cat && b.isEligibleForDistribution);
       const availStock = catBatches.reduce((s, b) => s + b.availableQuantity, 0);
-      const catDemandRate = cat === "Pharmaceuticals" ? 4200 : cat === "Dairy Products" ? 8900 : 6800;
+
+      // Calculate recent category demand in this region
+      const catHistory = recentHistory.filter(h => h.category === cat);
+      const catDailyAvg = catHistory.length > 0
+        ? catHistory.reduce((s, h) => s + h.quantityDemanded, 0) / uniqueDays
+        : 850;
 
       return {
         category: cat,
         availableInventory: availStock,
-        forecastDemand7Days: catDemandRate
+        forecastDemand7Days: Math.round(catDailyAvg * 7)
       };
     });
 
-    // B. Inventory Distribution by Region (Pune, Mumbai, Nashik, Kolhapur, Nagpur)
+    // B. Warehouse Capacity & Utilization in this region
     const inventoryByRegion = warehouses.map(wh => {
       const whBatches = batches.filter(b => b.warehouseId === wh.id);
       const totalUnits = whBatches.reduce((s, b) => s + b.totalQuantity, 0);
@@ -64,29 +86,46 @@ router.get("/dashboard", (req, res) => {
       return {
         region: wh.region,
         warehouseName: wh.name,
+        city: wh.city,
         totalUnits,
         coldUnits,
         capacityUnits: wh.totalCapacityUnits,
-        utilization: Math.round((totalUnits / wh.totalCapacityUnits) * 100)
+        utilization: Math.min(100, Math.round((totalUnits / wh.totalCapacityUnits) * 100))
       };
     });
 
     // C. Transportation Spend by Region
     const transportCostByRegion = [
-      { region: "Pune", spendINR: 84500, shipmentsCount: 24 },
-      { region: "Mumbai", spendINR: 112000, shipmentsCount: 38 },
-      { region: "Nashik", spendINR: 42300, shipmentsCount: 14 },
-      { region: "Kolhapur", spendINR: 38700, shipmentsCount: 12 },
-      { region: "Nagpur", spendINR: 65400, shipmentsCount: 19 }
+      { region: "North (Delhi-NCR)", spendINR: 84500, shipmentsCount: 26, avgLeadTimeHours: 18 },
+      { region: "West (Mumbai/Pune/Gujarat)", spendINR: 115000, shipmentsCount: 42, avgLeadTimeHours: 8 },
+      { region: "South (BLR/HYD/MAA)", spendINR: 92000, shipmentsCount: 31, avgLeadTimeHours: 12 },
+      { region: "East (Kolkata/WB)", spendINR: 48500, shipmentsCount: 16, avgLeadTimeHours: 24 }
     ];
 
-    // D. Stockout Risk by Category
+    // D. Stockout Risk by Category (Dynamic based on region)
     const stockoutRiskByCategory = categories.map(cat => {
-      let riskScore = 15;
-      if (cat === "Dairy Products") riskScore = 48; // High perishability
-      if (cat === "Pharmaceuticals") riskScore = 32; // Life critical
-      if (cat === "Packaged Foods") riskScore = 18;
-      if (cat === "Snacks & Confectionery") riskScore = 12;
+      let riskScore = 18;
+      if (requestedRegion === "North") {
+        if (cat === "Pharmaceuticals") riskScore = 52; // Heavy winter smog respiratory surge
+        else if (cat === "Packaged Foods") riskScore = 34; // Staple atta/rice
+        else if (cat === "Dairy Products") riskScore = 28;
+      } else if (requestedRegion === "South") {
+        if (cat === "Pharmaceuticals") riskScore = 44; // High biologics & insulin demand
+        else if (cat === "Dairy Products") riskScore = 38; // Probiotic Greek yogurt
+        else if (cat === "Beverages") riskScore = 32;
+      } else if (requestedRegion === "West") {
+        if (cat === "Snacks & Confectionery") riskScore = 42; // Quick-commerce snack depletion
+        else if (cat === "Dairy Products") riskScore = 36;
+        else if (cat === "Personal Care") riskScore = 30;
+      } else if (requestedRegion === "East") {
+        if (cat === "Beverages") riskScore = 58; // Tea consumption peak
+        else if (cat === "Pharmaceuticals") riskScore = 46; // ORS and antiseptic remedies
+        else if (cat === "Snacks & Confectionery") riskScore = 32;
+      } else {
+        if (cat === "Dairy Products") riskScore = 45;
+        if (cat === "Pharmaceuticals") riskScore = 42;
+        if (cat === "Beverages") riskScore = 26;
+      }
       return { category: cat, riskIndexPercent: riskScore };
     });
 
@@ -110,132 +149,131 @@ router.get("/dashboard", (req, res) => {
       {
         bucket: "> 30 Days Remaining",
         units: batches.filter(b => b.daysUntilExpiry > 30).reduce((s, b) => s + b.availableQuantity, 0),
-        status: "Safe Buffer"
-      },
-      {
-        bucket: "Expired / Quarantined",
-        units: batches.filter(b => b.inventoryStatus === "Expired" || b.inventoryStatus === "Quarantined").reduce((s, b) => s + b.totalQuantity, 0),
-        status: "Disposal / Audit Lock"
+        status: "Normal Healthy Stock"
       }
     ];
 
-    // F. FMCG vs Pharmaceuticals Breakdown
+    // F. FMCG vs Pharma Share
     const pharmaUnits = batches.filter(b => b.isPharma).reduce((s, b) => s + b.availableQuantity, 0);
-    const fmcgUnits = totalInventoryUnits - pharmaUnits;
+    const fmcgUnits = batches.filter(b => !b.isPharma).reduce((s, b) => s + b.availableQuantity, 0);
     const fmcgVsPharma = [
-      { name: "FMCG Commercial Goods", units: fmcgUnits, percentage: Math.round((fmcgUnits / (totalInventoryUnits || 1)) * 100) },
-      { name: "GDP Regulated Pharmaceuticals", units: pharmaUnits, percentage: Math.round((pharmaUnits / (totalInventoryUnits || 1)) * 100) }
+      { name: "FMCG Products", value: fmcgUnits, fill: "#2563EB" },
+      { name: "Pharmaceuticals", value: pharmaUnits, fill: "#8B5CF6" }
     ];
 
-    // 3. Actionable Alerts & Notifications
-    const alerts = [
-      {
-        id: "ALERT-01",
-        severity: "critical",
-        title: "Packaged Milk Demand Exceeds Availability in Kolhapur",
-        description: "Forecast weekend consumption exceeds on-hand Kolhapur depot inventory by 640 units. Imminent stockout risk within 36 hours.",
-        timestamp: "12 mins ago",
-        actionText: "Transfer from Pune Hub",
-        actionRoute: "/optimizer"
-      },
-      {
-        id: "ALERT-02",
-        severity: "warning",
-        title: "Excess Artisan Biscuit Stock in Mumbai Hub",
-        description: "Mumbai warehouse holds 4,100 units of Dark Cocoa Biscuits (38 days of supply). 1,200 units approach 18-day shelf life threshold.",
-        timestamp: "35 mins ago",
-        actionText: "Rebalance to Nashik",
-        actionRoute: "/inventory"
-      },
-      {
-        id: "ALERT-03",
-        severity: "critical",
-        title: "Greek Yogurt Batches Nearing 6-Day Expiry in Pune",
-        description: "Batch BAT-YOGUR-2026103 has 6 days remaining. Immediate FEFO dispatch recommended to high-velocity Pune urban retail cluster.",
-        timestamp: "1 hour ago",
-        actionText: "Inspect Batch in FEFO Queue",
-        actionRoute: "/inventory"
-      },
-      {
-        id: "ALERT-04",
-        severity: "warning",
-        title: "Mumbai Mega Hub Storage Utilization Reaches 86%",
-        description: "Bhiwandi warehouse is approaching the 90% soft capacity ceiling. Inbound bulk shipments may encounter dock congestion.",
-        timestamp: "2 hours ago",
-        actionText: "View Warehouse 3D Capacity",
-        actionRoute: "/warehouses"
-      },
-      {
-        id: "ALERT-05",
-        severity: "critical",
-        title: "Pharmaceutical Batch BAT-COUGH-2026122 Locked in Quarantine",
-        description: "Batch at Nashik failed minimum 120-day shelf life requirement. Automated quarantine locked 600 bottles from distribution.",
-        timestamp: "3 hours ago",
-        actionText: "View QA Audit Record",
-        actionRoute: "/inventory"
-      },
-      {
-        id: "ALERT-06",
-        severity: "warning",
-        title: "Cold-Chain Fleet Reefer Vehicle MH-12-KQ-4019 in Transit",
-        description: "Live sensor reports compartment temperature 4.1°C (Safe 2-8°C envelope). Expected delivery at Kolhapur within 2.5 hours.",
-        timestamp: "15 mins ago",
-        actionText: "Track Cold-Chain Truck",
-        actionRoute: "/shipments"
-      }
-    ];
+    // 3. Authentic Regional Alerts
+    const regionalAlerts = {
+      North: [
+        {
+          id: "ALERT-N01",
+          severity: "critical",
+          title: "PM2.5 Winter Smog Inversion: +240% Surge in Respiratory Pharma",
+          description: "High particulate pollution across Delhi-NCR is driving critical stock shortages of Ascoril D Plus Cough Syrup and Dolo 650 at Connaught Place and Saket pharmacies.",
+          timestamp: "12 mins ago",
+          actionText: "Run North FEFO Allocation",
+          actionRoute: "/optimizer"
+        },
+        {
+          id: "ALERT-N02",
+          severity: "warning",
+          title: "Aashirvaad Sharbati Atta (5kg) Safety Stock Warning at Gurugram",
+          description: "Reliance Smart Bazaar Sector 29 has 2.1 days of supply remaining against 7-day winter forecast demand.",
+          timestamp: "45 mins ago",
+          actionText: "Dispatch from Bilaspur Hub",
+          actionRoute: "/inventory"
+        }
+      ],
+      South: [
+        {
+          id: "ALERT-S01",
+          severity: "critical",
+          title: "Cold-Chain Biologics GDP Alert: Lantus Insulin Solostar Depot Depletion",
+          description: "Indiranagar Apollo 24|7 and Jubilee Hills pharmacies report high diabetes clinical draw. Strict 2-8°C reefer dispatch required from Shamshabad FTWZ.",
+          timestamp: "20 mins ago",
+          actionText: "Verify GDP Reefer Fleet",
+          actionRoute: "/shipments"
+        },
+        {
+          id: "ALERT-S02",
+          severity: "info",
+          title: "Epigamia Greek Probiotic Yogurt Surge in Whitefield Tech Corridor",
+          description: "Demand velocity up 180% week-on-week among urban tech demographic. Nelamangala warehouse cold vault dispatching batch BAT-BLR-002.",
+          timestamp: "1 hour ago",
+          actionText: "View 3D Cold Vaults",
+          actionRoute: "/inventory"
+        }
+      ],
+      West: [
+        {
+          id: "ALERT-W01",
+          severity: "warning",
+          title: "Bhiwandi Mega Hub: Rapid Quick-Commerce Snacking Turnover",
+          description: "Haldiram's Roasted Makhana and Britannia Cocoa Biscuits experiencing 2.4x order frequency from Mumbai MMR dark stores.",
+          timestamp: "30 mins ago",
+          actionText: "Review Cross-Dock Schedules",
+          actionRoute: "/shipments"
+        },
+        {
+          id: "ALERT-W02",
+          severity: "info",
+          title: "Chakan MIDC Industrial Fleet Reefer Vehicle MH-12-KQ-4019 in Transit",
+          description: "Live sensor telemetry reports 4.1°C compartment temperature (Safe 2-8°C envelope) en route to Pune Deccan Gymkhana.",
+          timestamp: "15 mins ago",
+          actionText: "Track Reefer Van",
+          actionRoute: "/shipments"
+        }
+      ],
+      East: [
+        {
+          id: "ALERT-E01",
+          severity: "critical",
+          title: "Tata Tea Gold & Electral ORS Depletion at Central Kolkata Retail",
+          description: "Frank Ross Heritage Park Street and Burrabazar wholesale network face low stock due to 24-hour inbound lead times from central supply.",
+          timestamp: "18 mins ago",
+          actionText: "Expedite from Dankuni Hub",
+          actionRoute: "/optimizer"
+        },
+        {
+          id: "ALERT-E02",
+          severity: "warning",
+          title: "Howrah Agro Terminal: Long-Haul Highway Consignment Arrived",
+          description: "Received 3,200 units of Aashirvaad Atta and Basmati rice from North corridor; quarantine check completed.",
+          timestamp: "2 hours ago",
+          actionText: "Release to Inventory",
+          actionRoute: "/inventory"
+        }
+      ]
+    };
 
-    // 4. Recent Recommendations
+    const alerts = isAll
+      ? [
+          ...regionalAlerts.North.slice(0, 1),
+          ...regionalAlerts.South.slice(0, 1),
+          ...regionalAlerts.West.slice(0, 1),
+          ...regionalAlerts.East.slice(0, 1)
+        ]
+      : regionalAlerts[requestedRegion] || regionalAlerts.West;
+
+    // 4. Regional Recommendations
     const latestPlan = plans[0];
-    const recentRecommendations = latestPlan ? latestPlan.recommendations.slice(0, 8) : [
-      {
-        id: "REC-5001",
-        productName: "Pure Organic Farm Fresh Milk (1L)",
-        category: "Dairy Products",
-        sourceWarehouseName: "Pune Central Fulfillment Hub",
-        destinationName: "D-Mart Tarabai Park Kolhapur",
-        recommendedQuantity: 800,
-        estimatedTransportationCostINR: 6800,
-        priority: "Urgent",
-        status: "Recommended"
-      },
-      {
-        id: "REC-5002",
-        productName: "Dark Cocoa Almond Artisan Biscuits (250g)",
-        category: "Snacks & Confectionery",
-        sourceWarehouseName: "Mumbai Metropolitan Mega Logistics Hub",
-        destinationName: "D-Mart Panchavati",
-        recommendedQuantity: 1200,
-        estimatedTransportationCostINR: 9600,
-        priority: "High",
-        status: "Recommended"
-      },
-      {
-        id: "REC-5003",
-        productName: "Insulin Glargine Solostar Recombinant Pen",
-        category: "Pharmaceuticals",
-        sourceWarehouseName: "Pune Central Fulfillment Hub",
-        destinationName: "Apollo 24x7 Pharmacy Kothrud",
-        recommendedQuantity: 450,
-        estimatedTransportationCostINR: 2450,
-        priority: "Urgent",
-        status: "Recommended"
-      },
-      {
-        id: "REC-5004",
-        productName: "Amoxicillin + Potassium Clavulanate 625mg",
-        category: "Pharmaceuticals",
-        sourceWarehouseName: "Nagpur Central Multi-Modal Logistics Center",
-        destinationName: "AIIMS Hospital Pharmacy Wing Nagpur",
-        recommendedQuantity: 600,
-        estimatedTransportationCostINR: 1800,
-        priority: "Standard",
-        status: "Recommended"
-      }
-    ];
+    const recs = latestPlan ? latestPlan.recommendations : [];
+    const recentRecommendations = isAll
+      ? recs.slice(0, 8)
+      : recs.filter(r => r.destinationRegion === requestedRegion || r.sourceRegion === requestedRegion).slice(0, 8);
+
+    // 5. Regional Context Metadata
+    const regionalContext = isAll
+      ? {
+          name: "All India National Supply Network",
+          macroContext: "Multi-regional supply chain coordinating 13 mega warehouses and 38 commercial destinations across North, West, South, and East corridors.",
+          primaryDrivers: "Cross-regional load balancing, FEFO expiry minimization, and strict GDP cold-chain compliance."
+        }
+      : REGIONAL_PROFILES[requestedRegion] || REGIONAL_PROFILES.West;
 
     res.json({
       success: true,
+      selectedRegion: requestedRegion,
+      regionalContext,
       kpis: {
         totalInventoryUnits,
         forecastDemandNext7Days,
@@ -263,12 +301,14 @@ router.get("/dashboard", (req, res) => {
 // GET /api/analytics/reports — Comprehensive export data
 router.get("/reports", (req, res) => {
   try {
-    const batches = Store.getBatches();
+    const region = req.query.region || "All";
+    const batches = Store.getBatches(region);
     const shipments = Store.getShipments();
-    const warehouses = Store.getWarehouses();
+    const warehouses = Store.getWarehouses(region);
 
     const report = {
       generatedAt: new Date().toISOString(),
+      region,
       summary: {
         totalStockUnits: batches.reduce((s, b) => s + b.availableQuantity, 0),
         totalValuationINR: batches.reduce((s, b) => s + (b.costValueINR || 0), 0),
@@ -279,6 +319,8 @@ router.get("/reports", (req, res) => {
       warehousePerformance: warehouses.map(w => ({
         warehouseId: w.id,
         name: w.name,
+        region: w.region,
+        city: w.city,
         capacity: w.totalCapacityUnits,
         coldStorage: w.coldStorageAvailable ? "Yes" : "No",
         fleetSize: w.fleetSizeTrucks
@@ -290,6 +332,7 @@ router.get("/reports", (req, res) => {
           batchNumber: b.batchNumber,
           productName: b.productName,
           warehouseName: b.warehouseName,
+          warehouseRegion: b.warehouseRegion,
           daysUntilExpiry: b.daysUntilExpiry,
           quantity: b.availableQuantity,
           status: b.inventoryStatus

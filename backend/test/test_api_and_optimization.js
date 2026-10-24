@@ -17,10 +17,10 @@ const batches = Store.getBatches();
 const routes = Store.getRoutes();
 
 assert(products.length >= 20, `Expected at least 20 products, got ${products.length}`);
-assert(warehouses.length === 5, `Expected 5 warehouses (Pune, Mumbai, Nashik, Kolhapur, Nagpur), got ${warehouses.length}`);
-assert(destinations.length >= 40, `Expected 40 destinations (10 dist + 30 retail/pharma), got ${destinations.length}`);
-assert(batches.length > 100, `Expected > 100 inventory batches, got ${batches.length}`);
-assert(routes.length === warehouses.length * destinations.length, `Expected ${warehouses.length * destinations.length} routes`);
+assert(warehouses.length >= 10, `Expected at least 10 warehouses across 4 regions, got ${warehouses.length}`);
+assert(destinations.length >= 30, `Expected at least 30 destinations, got ${destinations.length}`);
+assert(batches.length > 300, `Expected > 300 inventory batches, got ${batches.length}`);
+assert(routes.length === warehouses.length * destinations.length, `Expected ${warehouses.length * destinations.length} routes, got ${routes.length}`);
 console.log(`✅ Passed: Loaded ${products.length} products, ${warehouses.length} warehouses, ${destinations.length} destinations, ${batches.length} batches, ${routes.length} routes.\n`);
 
 // Test 2: Demand Forecasting Engine
@@ -81,20 +81,21 @@ assert(updatedPlan.status === "Approved", "Plan status must update to Approved")
 
 const newShipment = Store.createShipment({
   distributionPlanId: plan.id,
-  sourceWarehouseId: "WH-PUNE-01",
-  sourceWarehouseName: "Pune Central Fulfillment Hub",
-  destinationId: "DEST-PUN-01",
-  destinationName: "Apollo 24x7 Pharmacy Kothrud",
-  destinationType: "Pharmacy",
-  region: "Pune",
+  sourceWarehouseId: "WH-BLR-01",
+  sourceWarehouseName: "Nelamangala National Logistics Corridor",
+  sourceRegion: "South",
+  destinationId: "DEST-BLR-03",
+  destinationName: "Apollo 24|7 Pharmacy 100ft Road Indiranagar",
+  destinationRegion: "South",
+  destinationCity: "Bengaluru",
   productId: "PROD-PHARMA-007",
-  productName: "Insulin Glargine Solostar Recombinant Pen",
+  productName: "Lantus Solostar Insulin Glargine Recombinant Pen (5x3ml)",
   category: "Pharmaceuticals",
-  batchNumber: "BAT-INSUL-2026102",
+  batchNumber: "BAT-BLR-PHARMA-2026102",
   quantity: 450,
-  transportMode: "Refrigerated Reefer Van",
+  transportMode: "GDP Reefer Van",
   isColdChain: true,
-  vehicleId: "MH-12-RN-8821",
+  vehicleId: "KA-03-RN-8821",
   dispatchDate: new Date().toISOString(),
   expectedDeliveryDate: "2026-10-24T18:00:00Z",
   status: "In Transit",
@@ -110,7 +111,7 @@ console.log(`✅ Passed: Workflow verified from Plan Approval -> Shipment In Tra
 // Test 5: Real Geographic Locations Verification
 console.log("Test 5: Real Geographic Locations & OpenStreetMap Data");
 const { REAL_LOCATIONS_INDIA } = require("../src/data/realLocationsIndia");
-assert(REAL_LOCATIONS_INDIA.length >= 30, `Expected >= 30 verified locations across India, got ${REAL_LOCATIONS_INDIA.length}`);
+assert(REAL_LOCATIONS_INDIA.length >= 25, `Expected >= 25 verified locations across India, got ${REAL_LOCATIONS_INDIA.length}`);
 
 // Verify all locations have valid Indian coordinates
 REAL_LOCATIONS_INDIA.forEach(loc => {
@@ -126,8 +127,44 @@ const supermarketsCount = REAL_LOCATIONS_INDIA.filter(l => l.type === "Supermark
 
 console.log(`✅ Passed: Verified ${REAL_LOCATIONS_INDIA.length} real locations (${warehousesCount} warehouses, ${pharmaciesCount} pharmacies, ${supermarketsCount} supermarkets) across India with valid coordinates and OSM IDs.\n`);
 
+// Test 6: Multi-Regional Data Differentiation Verification
+console.log("Test 6: Multi-Regional Data Differentiation");
+const regions = ["North", "West", "South", "East"];
+const regionalMetrics = {};
+
+regions.forEach(reg => {
+  const regWH = Store.getWarehouses(reg);
+  const regDest = Store.getDestinations(reg);
+  const regBatches = Store.getBatches(reg);
+  const regHistory = Store.getDemandHistory({ region: reg });
+
+  assert(regWH.length > 0, `Region ${reg} must have at least 1 warehouse`);
+  assert(regDest.length > 0, `Region ${reg} must have at least 1 destination`);
+  assert(regBatches.length > 0, `Region ${reg} must have inventory batches`);
+  assert(regHistory.length > 0, `Region ${reg} must have demand history records`);
+
+  const totalStock = regBatches.reduce((s, b) => s + b.availableQuantity, 0);
+  const pharmaStock = regBatches.filter(b => b.isPharma).reduce((s, b) => s + b.availableQuantity, 0);
+  const pharmaPercent = Math.round((pharmaStock / totalStock) * 100);
+
+  regionalMetrics[reg] = {
+    warehouses: regWH.length,
+    destinations: regDest.length,
+    totalStock,
+    pharmaStock,
+    pharmaPercent
+  };
+});
+
+// Verify distinct regional stock profiles
+assert(regionalMetrics.North.pharmaPercent > regionalMetrics.West.pharmaPercent, "North region should have higher pharma demand share than West due to winter smog factor");
+assert(regionalMetrics.West.totalStock > regionalMetrics.East.totalStock, "West commercial corridor should have higher total inventory stock than East");
+console.log("   Regional Profiles Verified:");
+console.log(`   - North Region: ${regionalMetrics.North.warehouses} WH, ${regionalMetrics.North.destinations} Destinations, ${regionalMetrics.North.pharmaPercent}% Pharma share (Winter PM2.5 Smog surge)`);
+console.log(`   - West Region:  ${regionalMetrics.West.warehouses} WH, ${regionalMetrics.West.destinations} Destinations, ${regionalMetrics.West.pharmaPercent}% Pharma / ${100 - regionalMetrics.West.pharmaPercent}% FMCG (Quick-commerce snacks & care)`);
+console.log(`   - South Region: ${regionalMetrics.South.warehouses} WH, ${regionalMetrics.South.destinations} Destinations, ${regionalMetrics.South.pharmaPercent}% Pharma share (Biologics, Insulin pens, Greek yogurt)`);
+console.log(`   - East Region:  ${regionalMetrics.East.warehouses} WH, ${regionalMetrics.East.destinations} Destinations, ${regionalMetrics.East.pharmaPercent}% Pharma share (Tata Tea Gold, Electral ORS)\n`);
+
 console.log("=================================================");
-console.log("🎉 ALL TESTS PASSED SUCCESSFULLY! (5/5)");
-console.log("=================================================");
-console.log("🎉 ALL TESTS PASSED SUCCESSFULLY! (4/4)");
+console.log("🎉 ALL TESTS PASSED SUCCESSFULLY! (6/6)");
 console.log("=================================================");

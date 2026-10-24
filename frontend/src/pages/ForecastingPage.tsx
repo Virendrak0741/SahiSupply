@@ -42,13 +42,14 @@ export const ForecastingPage: React.FC<ForecastingPageProps> = ({ selectedRegion
 
   useEffect(() => {
     fetchInitialData();
-  }, []);
+  }, [selectedRegion]);
 
   const fetchInitialData = async () => {
     try {
+      const q = selectedRegion !== 'All' ? `?region=${selectedRegion}` : '';
       const [prodRes, destRes] = await Promise.all([
         fetch('/api/inventory/products'),
-        fetch('/api/forecast/destinations')
+        fetch(`/api/forecast/destinations${q}`)
       ]);
 
       const prodJson = await prodRes.json();

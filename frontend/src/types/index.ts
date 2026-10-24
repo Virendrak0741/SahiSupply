@@ -112,6 +112,7 @@ export interface InventoryBatch {
   sku: string;
   warehouseId: string;
   warehouseName: string;
+  warehouseRegion?: string;
   manufacturingDate: string;
   expiryDate: string;
   daysUntilExpiry: number;
@@ -254,6 +255,11 @@ export interface Shipment {
 }
 
 export interface DashboardData {
+  regionalContext?: {
+    name?: string;
+    macroContext?: string;
+    primaryDrivers?: string;
+  };
   kpis: {
     totalInventoryUnits: number;
     forecastDemandNext7Days: number;

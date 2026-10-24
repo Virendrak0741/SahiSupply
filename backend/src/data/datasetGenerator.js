@@ -1,9 +1,10 @@
-// SahiSupply AI — Realistic Dataset Generator
-// Generates 90-day historical demand, multi-warehouse batches with FEFO & Expiry dynamics, and route costs
+// SahiSupply AI — Authentic Multi-Regional Dataset Generator
+// Generates realistic demand, inventory batches, and transportation routes with distinct characteristics across:
+// North (Delhi-NCR), West (Mumbai/Pune/Gujarat), South (Bengaluru/Hyderabad/Chennai), East (Kolkata)
 
 const { PRODUCTS, WAREHOUSES, DISTRIBUTORS, RETAIL_AND_PHARMACIES } = require("./seedData");
 
-// Base date reference: October 24, 2026
+// Base operational reference date: October 24, 2026
 const CURRENT_DATE_STR = "2026-10-24";
 const CURRENT_DATE = new Date("2026-10-24T00:00:00.000Z");
 
@@ -17,49 +18,178 @@ function formatDate(date) {
   return date.toISOString().split("T")[0];
 }
 
-// Haversine distance approximation between warehouse and destination
-function calculateDistanceKm(coord1, coord2) {
-  const dx = (coord1.x - coord2.x) * 45; // scale factor
-  const dz = (coord1.z - coord2.z) * 45;
-  const dist = Math.sqrt(dx * dx + dz * dz);
-  return Math.max(15, Math.round(dist + 20)); // minimum 15km
+// Haversine formula for genuine geographic distance calculation (in Kilometers)
+function calculateHaversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const straightLine = R * c;
+  // Highway tortuosity factor (~1.25x for Indian national highways)
+  return Math.max(15, Math.round(straightLine * 1.25));
 }
 
-// Generate Routes between 5 Warehouses and all 40 Destinations (10 Dist + 30 Retail/Pharma)
+// Distinct Regional Demand & Consumption Profiles
+const REGIONAL_PROFILES = {
+  North: {
+    macroContext: "Winter onset with severe PM2.5 atmospheric smog inversion in Delhi-NCR",
+    primaryDrivers: "Heavy surge in respiratory & fever pharma, staple wheat atta, desi ghee, and winter immunity items",
+    categoryMultipliers: {
+      "Pharmaceuticals": 2.3, // Surge in cough syrups, antipyretics, inhalers
+      "Packaged Foods": 1.7, // Heavy staple wheat atta & basmati rice
+      "Dairy Products": 1.35, // Full-cream dairy & desi ghee
+      "Beverages": 0.8, // Reduced cold juice consumption; hot tea spikes
+      "Snacks & Confectionery": 1.1,
+      "Personal Care": 0.9,
+      "Household Cleaning": 1.05
+    },
+    productMultipliers: {
+      "PROD-PHARMA-004": 3.4, // Ascoril Cough Syrup (+240%)
+      "PROD-PHARMA-001": 2.5, // Dolo 650 Tablets (+150%)
+      "PROD-PHARMA-005": 2.7, // Becozinc Multivitamin + Zinc (+170%)
+      "PROD-FOOD-001": 2.3, // Aashirvaad Sharbati Atta 5kg (+130%)
+      "PROD-DAIRY-003": 2.0, // Amul Cow Desi Ghee 1L (+100%)
+      "PROD-BEV-002": 1.9 // Tata Tea Gold (+90%)
+    },
+    stockoutRiskIndex: 38.5,
+    freightPerKmINR: 2.10
+  },
+  West: {
+    macroContext: "Year-round coastal commercial hub with massive quick-commerce (Blinkit/Zepto) order density",
+    primaryDrivers: "Rapid turnover of packaged snacks, namkeen, premium personal care serums, and ready dairy",
+    categoryMultipliers: {
+      "Snacks & Confectionery": 2.4, // Massive snack and namkeen consumption
+      "Personal Care": 1.9, // Skincare, hyaluronic serums, shampoos
+      "Household Cleaning": 1.75, // Detergents and surface cleaners
+      "Dairy Products": 1.5, // High daily milk & fresh curd turnover
+      "Beverages": 1.45, // Year-round cold juices and sparkling water
+      "Packaged Foods": 1.3,
+      "Pharmaceuticals": 1.15
+    },
+    productMultipliers: {
+      "PROD-SNACK-002": 2.7, // Haldiram's Roasted Pink Salt Makhana (+170%)
+      "PROD-SNACK-001": 2.3, // Britannia Dark Cocoa Cookies (+130%)
+      "PROD-CARE-001": 2.5, // The Derma Co Hyaluronic Serum (+150%)
+      "PROD-CLEAN-001": 2.1, // Surf Excel Matic Liquid Detergent (+110%)
+      "PROD-BEV-001": 2.2 // Raw Pressery Orange Juice (+120%)
+    },
+    stockoutRiskIndex: 22.0,
+    freightPerKmINR: 1.85
+  },
+  South: {
+    macroContext: "Tech corridor & biotechnology healthcare hub with fitness, wellness, and cold-chain clinical demand",
+    primaryDrivers: "Highest demand for cold-chain biologics (Insulin pens, live probiotics) and premium organic wellness",
+    categoryMultipliers: {
+      "Pharmaceuticals": 1.85, // Biologics, diabetes, specialized medicines
+      "Dairy Products": 1.4, // Artisanal Greek probiotic yogurt
+      "Beverages": 1.6, // Cold-pressed juices and sparkling water
+      "Snacks & Confectionery": 1.5, // Protein granola & superfoods
+      "Personal Care": 1.8, // Dermatological care & clean beauty
+      "Packaged Foods": 1.35, // Oats, breakfast cereals
+      "Household Cleaning": 1.2
+    },
+    productMultipliers: {
+      "PROD-PHARMA-007": 3.9, // Lantus Solostar Insulin Glargine Pen (+290%)
+      "PROD-PHARMA-008": 3.3, // Darolac Multi-Strain Live Probiotics (+230%)
+      "PROD-DAIRY-002": 3.0, // Epigamia Greek Probiotic Yogurt (+200%)
+      "PROD-SNACK-003": 2.8, // Kellogg's Protein Superfood Granola (+180%)
+      "PROD-BEV-001": 2.5 // Raw Pressery Valencia Orange Juice (+150%)
+    },
+    stockoutRiskIndex: 29.4,
+    freightPerKmINR: 1.95
+  },
+  East: {
+    macroContext: "Subtropical Gangetic delta with vibrant tea-drinking heritage and neighborhood pharmacy reliance",
+    primaryDrivers: "Extreme tea consumption, oral rehydration electrolytes, antiseptic remedies, and tea-time biscuits",
+    categoryMultipliers: {
+      "Beverages": 2.8, // Extreme tea consumption (Tata Tea Gold)
+      "Pharmaceuticals": 1.6, // Gastrointestinal, antiseptic, and fever remedies
+      "Snacks & Confectionery": 1.7, // Tea-time biscuits & confectioneries
+      "Packaged Foods": 1.25,
+      "Personal Care": 1.1,
+      "Household Cleaning": 1.1,
+      "Dairy Products": 1.05
+    },
+    productMultipliers: {
+      "PROD-BEV-002": 4.5, // Tata Tea Gold Assam CTC & Leaf (+350%)
+      "PROD-PHARMA-003": 3.0, // Electral ORS WHO Formula (+200%)
+      "PROD-PHARMA-006": 2.8, // Cipladine Antiseptic Solution (+180%)
+      "PROD-SNACK-001": 2.4, // Britannia Dark Cocoa Cookies (+140%)
+      "PROD-PHARMA-001": 2.1 // Dolo 650 Tablets (+110%)
+    },
+    stockoutRiskIndex: 34.2,
+    freightPerKmINR: 2.25
+  }
+};
+
+// Generate realistic routes between Warehouses and Destinations across all regions
 function generateRoutes() {
   const allDestinations = [...DISTRIBUTORS, ...RETAIL_AND_PHARMACIES];
   const routes = [];
 
   for (const wh of WAREHOUSES) {
     for (const dest of allDestinations) {
-      const distanceKm = calculateDistanceKm(wh.coordinates, dest.coordinates);
-      // Lead time based on distance (speed ~ 45km/h + loading)
-      const leadTimeHours = Math.max(2, Math.round(distanceKm / 40 + 2));
+      // Calculate genuine highway distance using coordinates
+      const distanceKm = calculateHaversineKm(
+        wh.coordinates.lat,
+        wh.coordinates.lng,
+        dest.coordinates.lat,
+        dest.coordinates.lng
+      );
+
+      // Same region indicates local / intra-regional link
+      const isSameRegion = wh.region === dest.region;
+
+      // Realistic transit lead times:
+      // Local intra-regional (speed ~ 35 km/h + 2h dock loading)
+      // Long-haul interstate (speed ~ 45 km/h + 6h highway toll & dock handling)
+      const leadTimeHours = isSameRegion
+        ? Math.max(3, Math.round(distanceKm / 35 + 2))
+        : Math.round(distanceKm / 45 + 6);
       const leadTimeDays = Math.ceil(leadTimeHours / 24);
 
-      // Transportation cost per unit: base freight rate ₹1.5/km/unit-pallet factor
-      const baseCostPerUnit = Math.max(12, Math.round(15 + distanceKm * 0.18));
-      const coldChainCostPerUnit = Math.round(baseCostPerUnit * 1.65); // 65% premium for reefer trucks
+      // Freight rate calculation:
+      // Intra-regional rate: ₹1.8 - ₹2.2 / km / unit
+      // Long-haul interstate: volume rebate
+      const baseFreightRate = (REGIONAL_PROFILES[wh.region] || REGIONAL_PROFILES.West).freightPerKmINR;
+      const baseCostPerUnit = isSameRegion
+        ? Math.max(12, Math.round(14 + distanceKm * 0.16 * baseFreightRate))
+        : Math.max(45, Math.round(35 + distanceKm * 0.11 * baseFreightRate));
 
-      // Route capacity based on regional logistics link
-      const maxTruckCapacityUnits = distanceKm > 300 ? 12000 : 8000;
+      // 65% premium for temperature-controlled reefer freight
+      const coldChainCostPerUnit = Math.round(baseCostPerUnit * 1.65);
+
+      // Max truck capacity
+      const maxTruckCapacityUnits = distanceKm > 500 ? 15000 : 9000;
 
       routes.push({
         id: `ROUTE-${wh.id}-${dest.id}`,
         sourceWarehouseId: wh.id,
         sourceWarehouseName: wh.name,
+        sourceRegion: wh.region,
         destinationId: dest.id,
         destinationName: dest.name,
         destinationType: dest.type,
         destinationRegion: dest.region,
+        destinationCity: dest.city,
+        destinationState: dest.state,
         distanceKm,
+        isSameRegion,
         leadTimeHours,
         leadTimeDays,
         standardCostPerUnitINR: baseCostPerUnit,
         coldChainCostPerUnitINR: coldChainCostPerUnit,
         routeCapacityUnits: maxTruckCapacityUnits,
         isEligibleColdChain: wh.coldStorageAvailable && dest.hasColdChain,
-        isEligiblePharma: wh.handlingCapabilities.includes("Pharmaceutical GDP") && (dest.hasPharmaLicense || !dest.type.includes("Pharmacy"))
+        isEligiblePharma:
+          wh.handlingCapabilities.includes("Pharmaceutical GDP") &&
+          (dest.hasPharmaLicense || dest.type === "Distributor" || !dest.type.includes("Pharmacy"))
       });
     }
   }
@@ -67,108 +197,82 @@ function generateRoutes() {
   return routes;
 }
 
-// Generate Realistic Inventory Batches
+// Generate realistic multi-warehouse batches with distinct regional stock dynamics
 function generateInventoryBatches() {
   const batches = [];
   let batchCounter = 1000;
 
   for (const wh of WAREHOUSES) {
+    const regProfile = REGIONAL_PROFILES[wh.region] || REGIONAL_PROFILES.West;
+
     for (const prod of PRODUCTS) {
-      // Different stock situations across warehouses:
-      // Pune has high stock of Dairy & Pharma
-      // Mumbai has excess FMCG & Packaged food
-      // Kolhapur has low stock of Dairy (simulating regional deficit)
-      // Nashik has excess Beverages
-      // Nagpur has critical low stock of Insulin & Paracetamol
-      let baseBatchCount = 3;
-      let qtyMultiplier = 1.0;
+      // Determine regional stock weighting:
+      // Warehouses hold higher stock of categories prioritized in their region
+      const catMult = regProfile.categoryMultipliers[prod.category] || 1.0;
+      const prodMult = regProfile.productMultipliers[prod.id] || 1.0;
+      const demandMultiplier = catMult * prodMult;
 
-      if (wh.id === "WH-MUMBAI-01" && (prod.category === "Packaged Foods" || prod.category === "Snacks & Confectionery")) {
-        qtyMultiplier = 2.4; // Excess stock
-      } else if (wh.id === "WH-PUNE-01" && prod.category === "Dairy Products") {
-        qtyMultiplier = 1.8; // High availability
-      } else if (wh.id === "WH-KOLHAPUR-01" && prod.id === "PROD-DAIRY-001") {
-        qtyMultiplier = 0.25; // Critical low stock scenario!
-      } else if (wh.id === "WH-NAGPUR-01" && prod.id === "PROD-PHARMA-007") {
-        qtyMultiplier = 0.15; // Critical stockout risk for Insulin in Nagpur!
-      } else if (wh.id === "WH-NASHIK-01" && prod.category === "Household Cleaning") {
-        qtyMultiplier = 1.6;
-      }
+      // Number of batches per SKU (2 to 4 batches representing different manufacturing dates)
+      const numBatches = prod.isColdChainRequired ? 2 : 3;
 
-      for (let b = 0; b < baseBatchCount; b++) {
+      for (let bIdx = 0; bIdx < numBatches; bIdx++) {
         batchCounter++;
-        const batchNum = `BAT-${prod.sku.substring(4, 9)}-${2026}${String(batchCounter).slice(-3)}`;
+        const batchNum = `BAT-${wh.id.replace("WH-", "")}-${prod.id.replace("PROD-", "")}-${2026100 + batchCounter}`;
 
-        // Batch expiration profiles:
-        // b = 0: Regular fresh batch (healthy shelf life)
-        // b = 1: Mid-life batch
-        // b = 2: Scenario batch (either near-expiry, expired/quarantined, or reserved)
-        let daysUntilExpiry;
+        // Manufacturing & Expiry dates calculation
         let mfgDaysAgo;
-        let qaStatus = "Healthy";
-        let isQuarantined = false;
+        let daysUntilExpiry;
 
-        if (b === 0) {
-          daysUntilExpiry = Math.round(prod.standardShelfLifeDays * 0.85);
-          mfgDaysAgo = Math.round(prod.standardShelfLifeDays * 0.15);
-        } else if (b === 1) {
-          daysUntilExpiry = Math.round(prod.standardShelfLifeDays * 0.45);
-          mfgDaysAgo = Math.round(prod.standardShelfLifeDays * 0.55);
+        if (bIdx === 0) {
+          // Batch 0: Fresh arrival (long remaining shelf life)
+          mfgDaysAgo = Math.round(5 + Math.random() * 15);
+          daysUntilExpiry = prod.standardShelfLifeDays - mfgDaysAgo;
+        } else if (bIdx === 1) {
+          // Batch 1: Mid-cycle stock
+          mfgDaysAgo = Math.round(prod.standardShelfLifeDays * 0.45);
+          daysUntilExpiry = Math.max(18, prod.standardShelfLifeDays - mfgDaysAgo);
         } else {
-          // Special scenarios!
-          if (prod.id === "PROD-DAIRY-002" && wh.id === "WH-PUNE-01") {
-            // Near expiry yogurt batch (6 days left!)
-            daysUntilExpiry = 6;
-            mfgDaysAgo = 19;
-            qaStatus = "Near Expiry";
-          } else if (prod.id === "PROD-SNACK-001" && wh.id === "WH-MUMBAI-01") {
-            // Excess biscuits nearing 18 days
-            daysUntilExpiry = 18;
-            mfgDaysAgo = 72;
-            qaStatus = "Near Expiry";
-          } else if (prod.id === "PROD-PHARMA-004" && wh.id === "WH-NASHIK-01") {
-            // Quarantined / Expired cough syrup batch (expired 10 days ago)
-            daysUntilExpiry = -10;
-            mfgDaysAgo = 550;
-            qaStatus = "Expired";
-            isQuarantined = true;
-          } else if (prod.id === "PROD-PHARMA-001" && wh.id === "WH-KOLHAPUR-01") {
-            // Batch undergoing QA audit quarantine
-            daysUntilExpiry = 220;
-            mfgDaysAgo = 140;
-            qaStatus = "Quarantined";
-            isQuarantined = true;
-          } else {
-            daysUntilExpiry = Math.round(prod.standardShelfLifeDays * 0.6);
-            mfgDaysAgo = Math.round(prod.standardShelfLifeDays * 0.4);
-          }
+          // Batch 2: Near-expiry FEFO trigger batch (simulating urgent distribution need)
+          mfgDaysAgo = Math.round(prod.standardShelfLifeDays * 0.88);
+          daysUntilExpiry = Math.max(6, prod.standardShelfLifeDays - mfgDaysAgo);
         }
 
         const mfgDate = formatDate(addDays(CURRENT_DATE, -mfgDaysAgo));
         const expDate = formatDate(addDays(CURRENT_DATE, daysUntilExpiry));
 
-        // Available vs reserved quantities
-        const baseQty = Math.round((prod.isPharma ? 600 : 1800) * qtyMultiplier * (0.8 + Math.random() * 0.4));
-        const reservedQty = Math.round(baseQty * (0.05 + Math.random() * 0.12));
+        // Quarantine simulation (~2.5% of batches in regulatory QA hold)
+        const isQuarantined = prod.isPharma && batchCounter % 37 === 0;
+        const qaStatus = isQuarantined ? "Quarantined" : "Passed";
+
+        // Regional stock quantity:
+        // High capacity mega-hubs (Bilaspur, Bhiwandi, Nelamangala) hold larger batch sizes
+        const hubScale = wh.totalCapacityUnits > 200000 ? 1.4 : 1.0;
+        const baseQty = Math.round(
+          (prod.isPharma ? 550 : 1600) * demandMultiplier * hubScale * (0.8 + Math.random() * 0.4)
+        );
+
+        const reservedQty = Math.round(baseQty * (0.05 + Math.random() * 0.1));
         const availableQty = Math.max(0, baseQty - reservedQty);
 
-        // Calculate Days of Inventory Remaining (DOIR) based on estimated avg daily demand
-        const avgDailyDraw = Math.max(10, Math.round(baseQty / 30));
+        // Daily demand draw estimate
+        const avgDailyDraw = Math.max(10, Math.round((baseQty * demandMultiplier) / 25));
         const daysOfSupply = Math.round(availableQty / avgDailyDraw);
 
-        // Determine inventory status badge
+        // Determine operational inventory status badge
         let status = "Healthy";
         if (isQuarantined) {
-          status = qaStatus;
+          status = "Quarantined";
         } else if (daysUntilExpiry <= 0) {
           status = "Expired";
         } else if (daysUntilExpiry <= 14 && prod.standardShelfLifeDays <= 45) {
           status = "Near Expiry";
-        } else if (availableQty < 150) {
+        } else if (daysUntilExpiry <= 30 && prod.isColdChainRequired) {
+          status = "Near Expiry";
+        } else if (availableQty < 160) {
           status = "Critical";
-        } else if (availableQty < 400) {
+        } else if (availableQty < 420) {
           status = "Low Stock";
-        } else if (availableQty > 2500) {
+        } else if (availableQty > 2800) {
           status = "Excess Stock";
         }
 
@@ -181,6 +285,9 @@ function generateInventoryBatches() {
           sku: prod.sku,
           warehouseId: wh.id,
           warehouseName: wh.name,
+          warehouseRegion: wh.region,
+          warehouseCity: wh.city,
+          warehouseState: wh.state,
           manufacturingDate: mfgDate,
           expiryDate: expDate,
           daysUntilExpiry,
@@ -194,7 +301,7 @@ function generateInventoryBatches() {
           inventoryStatus: status,
           isEligibleForDistribution: !isQuarantined && daysUntilExpiry > prod.minShelfLifeDaysDelivery,
           rejectionReason: isQuarantined
-            ? `Batch ${qaStatus}: Locked by regulatory QA protocol`
+            ? `Batch Quarantined: Locked by Regulatory QA Laboratory Protocol`
             : daysUntilExpiry <= prod.minShelfLifeDaysDelivery
             ? `Remaining shelf life (${daysUntilExpiry}d) below minimum threshold (${prod.minShelfLifeDaysDelivery}d)`
             : null,
@@ -212,48 +319,53 @@ function generateInventoryBatches() {
   return batches;
 }
 
-// Generate 90-day Historical Demand Records (July 26, 2026 to October 24, 2026)
+// Generate 60-day Historical Demand Records (Aug 25, 2026 to Oct 24, 2026)
+// Incorporates authentic regional demand factors, weekend surges, and distinct stockout risks
 function generateDemandHistory() {
   const history = [];
   const allDestinations = [...DISTRIBUTORS, ...RETAIL_AND_PHARMACIES];
-  const totalDays = 90;
+  const totalDays = 60;
 
   for (let d = totalDays; d >= 1; d--) {
     const recordDate = addDays(CURRENT_DATE, -d);
     const dateStr = formatDate(recordDate);
-    const dayOfWeek = recordDate.getDay(); // 0 is Sunday, 6 is Saturday
+    const dayOfWeek = recordDate.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
     for (const prod of PRODUCTS) {
-      // Pick a sample of destinations per day to keep size realistic and fast (~2-3 destinations per product per day)
       for (const dest of allDestinations) {
-        // Base demand parameter per product-destination profile
-        let baseDemand = prod.isPharma ? 25 : 65;
-        if (dest.type === "Hypermarket" || dest.type === "Distributor") {
-          baseDemand *= 2.8;
+        const regProfile = REGIONAL_PROFILES[dest.region] || REGIONAL_PROFILES.West;
+        const catMult = regProfile.categoryMultipliers[prod.category] || 1.0;
+        const prodMult = regProfile.productMultipliers[prod.id] || 1.0;
+
+        // Base daily demand
+        let baseDemand = prod.isPharma ? 28 : 70;
+        baseDemand *= catMult * prodMult;
+
+        // Wholesale Distributors and Hypermarkets order in larger batches
+        if (dest.type === "Distributor") {
+          baseDemand *= 3.0;
+        } else if (dest.type === "Hypermarket") {
+          baseDemand *= 2.2;
         }
 
-        // Weekend surge for groceries and snacks (30% increase)
+        // Weekend surge for groceries, snacks, and dairy (30-45% increase)
         if (isWeekend && (prod.category === "Snacks & Confectionery" || prod.category === "Dairy Products" || prod.category === "Packaged Foods")) {
           baseDemand *= 1.35;
         }
 
-        // Seasonal spike in beverages during warmer days
-        if (prod.category === "Beverages" && d > 45) {
-          baseDemand *= 1.2;
-        }
-
         // Random gaussian-like fluctuation
-        const noise = (Math.random() + Math.random() + Math.random() - 1.5) * 0.35;
+        const noise = (Math.random() + Math.random() + Math.random() - 1.5) * 0.3;
         const actualSales = Math.max(0, Math.round(baseDemand * (1 + noise)));
 
-        // Unmet demand (stockout occurrence on ~4% of observations)
-        const hadStockout = Math.random() < 0.04;
-        const lostSales = hadStockout ? Math.round(actualSales * 0.4) : 0;
+        // Unmet demand (stockout occurrence based on destination stockout risk)
+        const riskRate = dest.stockoutRiskLevel === "High" ? 0.08 : 0.03;
+        const hadStockout = Math.random() < riskRate;
+        const lostSales = hadStockout ? Math.round(actualSales * 0.35) : 0;
 
         history.push({
           date: dateStr,
-          dayIndex: 91 - d,
+          dayIndex: 61 - d,
           productId: prod.id,
           productName: prod.name,
           category: prod.category,
@@ -262,6 +374,8 @@ function generateDemandHistory() {
           destinationName: dest.name,
           destinationType: dest.type,
           region: dest.region,
+          city: dest.city,
+          state: dest.state,
           quantityDemanded: actualSales + lostSales,
           quantityFulfilled: actualSales,
           unmetDemand: lostSales,
@@ -275,197 +389,138 @@ function generateDemandHistory() {
   return history;
 }
 
-// Initial Live Shipments
+// Initial live in-transit shipments across North, West, South, and East
 function generateInitialShipments(routes) {
   const shipments = [
+    // North In-Transit Reefer Shipment
     {
-      id: "SHP-2026-9001",
-      distributionPlanId: "PLAN-BASE-INIT",
-      sourceWarehouseId: "WH-PUNE-01",
-      sourceWarehouseName: "Pune Central Fulfillment Hub",
-      destinationId: "DEST-PUN-01",
-      destinationName: "Apollo 24x7 Pharmacy Kothrud",
-      destinationType: "Pharmacy",
-      region: "Pune",
-      productId: "PROD-PHARMA-007",
-      productName: "Insulin Glargine Solostar Recombinant Pen",
+      id: "SHP-2026-N01",
+      shipmentNumber: "TRK-DL-4019",
+      sourceWarehouseId: "WH-DEL-01",
+      sourceWarehouseName: "Amazon & Flipkart Mega Fulfillment Hub Bilaspur",
+      sourceRegion: "North",
+      destinationId: "DEST-DEL-05",
+      destinationName: "Fortis Escorts Hospital Central Chemist Wing Saket",
+      destinationRegion: "North",
+      destinationCity: "South Delhi",
+      productName: "Ascoril D Plus Expectorant Cough Syrup (100ml)",
       category: "Pharmaceuticals",
-      batchNumber: "BAT-INSUL-2026102",
-      quantity: 450,
-      transportMode: "Refrigerated Reefer Van (2-8°C)",
-      isColdChain: true,
-      vehicleId: "MH-12-RN-8821",
-      dispatchDate: "2026-10-24T08:30:00Z",
-      expectedDeliveryDate: "2026-10-24T14:30:00Z",
-      actualDeliveryDate: null,
-      estimatedTransportationCostINR: 2450,
+      quantityShipped: 1200,
+      dispatchTimestamp: new Date(Date.now() - 2.5 * 3600000).toISOString(),
+      estimatedDeliveryTimestamp: new Date(Date.now() + 1.5 * 3600000).toISOString(),
       status: "In Transit",
-      currentProgressPercent: 65,
-      currentLocationDesc: "Passing Shivaji Nagar Bypass, Pune",
-      notes: "High-priority GDP cold chain insulin shipment."
+      vehicleNumber: "HR-26-CB-4019",
+      vehicleType: "Refrigerated Reefer Van (2-8°C)",
+      driverName: "Harpal Singh",
+      driverPhone: "+91-98112-90124",
+      currentTemperatureCelsius: 4.2,
+      temperatureStatus: "Normal (Safe 2-8°C)",
+      estimatedTransportationCostINR: 4200
     },
+    // West In-Transit Heavy Freight
     {
-      id: "SHP-2026-9002",
-      distributionPlanId: "PLAN-BASE-INIT",
-      sourceWarehouseId: "WH-MUMBAI-01",
-      sourceWarehouseName: "Mumbai Metropolitan Mega Logistics Hub",
-      destinationId: "DEST-NSK-02",
-      destinationName: "D-Mart Panchavati",
-      destinationType: "Retail Store",
-      region: "Nashik",
-      productId: "PROD-FOOD-001",
-      productName: "Chakki Fresh Stone Ground Wheat Atta (5kg)",
-      category: "Packaged Foods",
-      batchNumber: "BAT-ATTA-2026118",
-      quantity: 1200,
-      transportMode: "16-Ton Heavy Freight Truck",
-      isColdChain: false,
-      vehicleId: "MH-04-AX-5510",
-      dispatchDate: "2026-10-23T18:00:00Z",
-      expectedDeliveryDate: "2026-10-24T11:00:00Z",
-      actualDeliveryDate: "2026-10-24T10:45:00Z",
-      estimatedTransportationCostINR: 11400,
-      status: "Delivered",
-      currentProgressPercent: 100,
-      currentLocationDesc: "Delivered at Nashik Panchavati Dock 3",
-      notes: "Replenished weekend stock for retail chain."
-    },
-    {
-      id: "SHP-2026-9003",
-      distributionPlanId: "PLAN-BASE-INIT",
-      sourceWarehouseId: "WH-PUNE-01",
-      sourceWarehouseName: "Pune Central Fulfillment Hub",
-      destinationId: "DEST-KOL-02",
-      destinationName: "D-Mart Tarabai Park Kolhapur",
-      destinationType: "Retail Store",
-      region: "Kolhapur",
-      productId: "PROD-DAIRY-001",
-      productName: "Pure Organic Farm Fresh Milk (1L)",
-      category: "Dairy Products",
-      batchNumber: "BAT-MILK-2026105",
-      quantity: 800,
-      transportMode: "Chilled Reefer Truck (4°C)",
-      isColdChain: true,
-      vehicleId: "MH-12-KQ-4019",
-      dispatchDate: "2026-10-24T06:00:00Z",
-      expectedDeliveryDate: "2026-10-24T16:00:00Z",
-      actualDeliveryDate: null,
-      estimatedTransportationCostINR: 6800,
-      status: "In Transit",
-      currentProgressPercent: 80,
-      currentLocationDesc: "Approving Satara Highway Toll Plaza",
-      notes: "Urgent dairy replenishment to prevent Kolhapur stockout."
-    },
-    {
-      id: "SHP-2026-9004",
-      distributionPlanId: "PLAN-BASE-INIT",
-      sourceWarehouseId: "WH-NASHIK-01",
-      sourceWarehouseName: "Nashik North Distribution Gateway",
-      destinationId: "DIST-AURANGABAD-01",
-      destinationName: "Marathwada Central Supply",
-      destinationType: "Distributor",
-      region: "Nashik",
-      productId: "PROD-BEV-001",
-      productName: "Cold-Pressed Valencia Orange Juice (1L)",
-      category: "Beverages",
-      batchNumber: "BAT-JUICE-2026134",
-      quantity: 950,
-      transportMode: "Refrigerated Van",
-      isColdChain: true,
-      vehicleId: "MH-15-EM-7190",
-      dispatchDate: "2026-10-24T11:00:00Z",
-      expectedDeliveryDate: "2026-10-24T18:00:00Z",
-      actualDeliveryDate: null,
-      estimatedTransportationCostINR: 5200,
-      status: "Dispatched",
-      currentProgressPercent: 25,
-      currentLocationDesc: "Nashik Outskirts Toll Gate",
-      notes: "Perishable juice allocation under FEFO."
-    },
-    {
-      id: "SHP-2026-9005",
-      distributionPlanId: "PLAN-BASE-INIT",
-      sourceWarehouseId: "WH-NAGPUR-01",
-      sourceWarehouseName: "Nagpur Central Multi-Modal Logistics Center",
-      destinationId: "DEST-NGP-02",
-      destinationName: "AIIMS Hospital Pharmacy Wing Nagpur",
-      destinationType: "Pharmacy",
-      region: "Nagpur",
-      productId: "PROD-PHARMA-002",
-      productName: "Amoxicillin + Potassium Clavulanate 625mg",
-      category: "Pharmaceuticals",
-      batchNumber: "BAT-AMOX-2026155",
-      quantity: 600,
-      transportMode: "GPS Tracked Pharma Courier",
-      isColdChain: false,
-      vehicleId: "MH-31-TR-1022",
-      dispatchDate: "2026-10-24T13:00:00Z",
-      expectedDeliveryDate: "2026-10-24T15:30:00Z",
-      actualDeliveryDate: null,
-      estimatedTransportationCostINR: 1800,
-      status: "Dispatched",
-      currentProgressPercent: 40,
-      currentLocationDesc: "MIHAN Industrial Flyover",
-      notes: "Direct hospital antibiotic replenishment."
-    },
-    {
-      id: "SHP-2026-9006",
-      distributionPlanId: "PLAN-BASE-INIT",
-      sourceWarehouseId: "WH-MUMBAI-01",
-      sourceWarehouseName: "Mumbai Metropolitan Mega Logistics Hub",
+      id: "SHP-2026-W01",
+      shipmentNumber: "TRK-MH-8821",
+      sourceWarehouseId: "WH-MUM-01",
+      sourceWarehouseName: "Bhiwandi National Mega Logistics Corridor",
+      sourceRegion: "West",
       destinationId: "DEST-MUM-01",
-      destinationName: "Apollo Pharmacy Bandra West",
-      destinationType: "Pharmacy",
-      region: "Mumbai",
-      productId: "PROD-PHARMA-001",
-      productName: "Paracetamol 650mg Antipyretic Analgesic Tablets",
+      destinationName: "DMart Hypermarket Kandivali West",
+      destinationRegion: "West",
+      destinationCity: "Mumbai",
+      productName: "Surf Excel Matic Front Load Liquid Detergent (2L)",
+      category: "Household Cleaning",
+      quantityShipped: 2400,
+      dispatchTimestamp: new Date(Date.now() - 3.0 * 3600000).toISOString(),
+      estimatedDeliveryTimestamp: new Date(Date.now() + 1.0 * 3600000).toISOString(),
+      status: "In Transit",
+      vehicleNumber: "MH-04-AZ-8821",
+      vehicleType: "16-Ton Multi-Axle Freight Truck",
+      driverName: "Dnyaneshwar Pawar",
+      driverPhone: "+91-98204-77192",
+      currentTemperatureCelsius: null,
+      temperatureStatus: "Ambient Dry Transport",
+      estimatedTransportationCostINR: 6800
+    },
+    // South In-Transit Critical Cold Biologics
+    {
+      id: "SHP-2026-S01",
+      shipmentNumber: "TRK-KA-5510",
+      sourceWarehouseId: "WH-BLR-01",
+      sourceWarehouseName: "Nelamangala National Logistics Corridor",
+      sourceRegion: "South",
+      destinationId: "DEST-BLR-03",
+      destinationName: "Apollo 24|7 Pharmacy 100ft Road Indiranagar",
+      destinationRegion: "South",
+      destinationCity: "Bengaluru",
+      productName: "Lantus Solostar Insulin Glargine Recombinant Pen (5x3ml)",
       category: "Pharmaceuticals",
-      batchNumber: "BAT-PCM-2026101",
-      quantity: 500,
-      transportMode: "City Delivery Van",
-      isColdChain: false,
-      vehicleId: "MH-02-CP-9014",
-      dispatchDate: "2026-10-24T14:00:00Z",
-      expectedDeliveryDate: "2026-10-24T17:00:00Z",
-      actualDeliveryDate: null,
-      estimatedTransportationCostINR: 1400,
-      status: "Pending",
-      currentProgressPercent: 5,
-      currentLocationDesc: "Staged at Mumbai Hub Bay 4",
-      notes: "Approved batch awaiting final courier dispatch."
+      quantityShipped: 650,
+      dispatchTimestamp: new Date(Date.now() - 1.5 * 3600000).toISOString(),
+      estimatedDeliveryTimestamp: new Date(Date.now() + 1.0 * 3600000).toISOString(),
+      status: "In Transit",
+      vehicleNumber: "KA-03-MG-5510",
+      vehicleType: "GDP Reefer Van (Strict 2-8°C)",
+      driverName: "R. Suresh Kumar",
+      driverPhone: "+91-98451-22910",
+      currentTemperatureCelsius: 3.8,
+      temperatureStatus: "Normal (Safe 2-8°C)",
+      estimatedTransportationCostINR: 3950
+    },
+    // East In-Transit Tea & ORS Express
+    {
+      id: "SHP-2026-E01",
+      shipmentNumber: "TRK-WB-2294",
+      sourceWarehouseId: "WH-CCU-01",
+      sourceWarehouseName: "Dankuni Industrial Supply Chain Hub",
+      sourceRegion: "East",
+      destinationId: "DEST-CCU-03",
+      destinationName: "Frank Ross Pharmacy Heritage Flagship Park Street",
+      destinationRegion: "East",
+      destinationCity: "Central Kolkata",
+      productName: "Electral ORS WHO Formula Pro-Electrolyte (50 Sachets)",
+      category: "Pharmaceuticals",
+      quantityShipped: 950,
+      dispatchTimestamp: new Date(Date.now() - 2.0 * 3600000).toISOString(),
+      estimatedDeliveryTimestamp: new Date(Date.now() + 1.2 * 3600000).toISOString(),
+      status: "In Transit",
+      vehicleNumber: "WB-02-AK-2294",
+      vehicleType: "Standard Box Courier Van",
+      driverName: "Biswajit Roy",
+      driverPhone: "+91-98302-11849",
+      currentTemperatureCelsius: null,
+      temperatureStatus: "Ambient Dry Transport",
+      estimatedTransportationCostINR: 3400
     }
   ];
 
   return shipments;
 }
 
-// System Settings Defaults
 const DEFAULT_SETTINGS = {
-  safetyStockDays: 5,
-  stockoutPenaltyPerUnitINR: 150,
-  holdingCostPerUnitPerDayINR: 1.25,
-  expiryCostMultiplier: 1.0, // 100% of product value
-  transportationWeight: 0.35,
-  stockoutWeight: 0.40,
-  expiryWeight: 0.25,
-  defaultForecastHorizonDays: 7,
-  defaultForecastModel: "Exponential Smoothing",
-  maxShipmentCapPerRun: 50,
-  minShelfLifeBufferDays: 14,
-  coldChainEnforcementStrict: true,
-  gdpTraceabilityRequired: true,
-  assumptions: [
-    "Distances are calculated using road-network euclidean metric scaled by 1.25 winding factor.",
-    "Reefer cold-chain transportation incurs a 65% freight premium over standard dry logistics.",
-    "Expired batches and batches failing minimum shelf-life threshold are strictly ineligible for shipment.",
-    "Destinations without cold-storage licensing cannot receive cold-chain sensitive pharmaceuticals or dairy items.",
-    "Historical demand reflects 90 days of simulated retail consumption and distributor pull data."
-  ]
+  general: {
+    systemName: "SahiSupply AI",
+    deploymentMode: "Enterprise Cloud Multi-Region",
+    defaultPlanningHorizonDays: 7,
+    autoApproveOptimizedPlans: false,
+    requireTwoPersonSignoffPharma: true
+  },
+  optimization: {
+    transportationCostWeight: 0.35,
+    stockoutPenaltyWeight: 0.40,
+    expiryPenaltyWeight: 0.25,
+    minShelfLifeBufferDays: 14,
+    enforceColdChainStrict: true,
+    maxDistanceRadiusKm: 1800
+  },
+  regionalDemandFactors: REGIONAL_PROFILES
 };
 
 module.exports = {
   CURRENT_DATE_STR,
   CURRENT_DATE,
+  REGIONAL_PROFILES,
+  calculateHaversineKm,
   generateRoutes,
   generateInventoryBatches,
   generateDemandHistory,

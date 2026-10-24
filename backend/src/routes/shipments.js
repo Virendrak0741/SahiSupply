@@ -6,7 +6,11 @@ const Store = require("../models/store");
 // GET /api/shipments/kpis
 router.get("/kpis", (req, res) => {
   try {
-    const shipments = Store.getShipments();
+    const { region } = req.query;
+    let shipments = Store.getShipments();
+    if (region && region !== "All") {
+      shipments = shipments.filter(s => s.destinationRegion === region || s.sourceRegion === region);
+    }
 
     const total = shipments.length;
     const pending = shipments.filter(s => s.status === "Pending" || s.status === "Approved").length;
@@ -39,7 +43,11 @@ router.get("/kpis", (req, res) => {
 router.get("/", (req, res) => {
   try {
     let list = Store.getShipments();
-    const { status, category, isColdChain, warehouseId, search } = req.query;
+    const { status, category, isColdChain, warehouseId, search, region } = req.query;
+
+    if (region && region !== "All") {
+      list = list.filter(s => s.destinationRegion === region || s.sourceRegion === region);
+    }
 
     if (status) list = list.filter(s => s.status === status);
     if (category) list = list.filter(s => s.category === category);

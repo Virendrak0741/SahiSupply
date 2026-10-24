@@ -64,14 +64,15 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ selectedRegion, se
 
   useEffect(() => {
     fetchInventory();
-  }, []);
+  }, [selectedRegion]);
 
   const fetchInventory = async () => {
     try {
       setLoading(true);
+      const q = selectedRegion && selectedRegion !== 'All' ? `?region=${selectedRegion}` : '';
       const [batchRes, whRes, prodRes] = await Promise.all([
-        fetch('/api/inventory/batches'),
-        fetch('/api/warehouses'),
+        fetch(`/api/inventory/batches${q}`),
+        fetch(`/api/warehouses${q}`),
         fetch('/api/inventory/products')
       ]);
 
@@ -111,7 +112,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ selectedRegion, se
     if (categoryFilter !== 'All' && b.category !== categoryFilter) return false;
     if (statusFilter !== 'All' && b.inventoryStatus !== statusFilter) return false;
     if (pharmaOnly && !b.isPharma) return false;
-    if (selectedRegion !== 'All' && b.warehouseName && !b.warehouseName.toLowerCase().includes(selectedRegion.toLowerCase())) {
+    if (selectedRegion !== 'All' && b.warehouseRegion && b.warehouseRegion !== selectedRegion) {
       return false;
     }
     if (expiryFilter === '7d' && !(b.daysUntilExpiry > 0 && b.daysUntilExpiry <= 7)) return false;

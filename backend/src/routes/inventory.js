@@ -6,8 +6,9 @@ const Store = require("../models/store");
 // GET /api/inventory/overview — KPI cards
 router.get("/overview", (req, res) => {
   try {
+    const region = req.query.region;
     const products = Store.getProducts();
-    const batches = Store.getBatches();
+    const batches = Store.getBatches(region);
 
     const totalSKUs = products.length;
     let totalUnits = 0;
@@ -90,8 +91,8 @@ router.put("/products/:id", (req, res) => {
 // GET /api/inventory/batches — filterable batches table
 router.get("/batches", (req, res) => {
   try {
-    let list = Store.getBatches();
-    const { category, warehouseId, status, search, isPharma, expiryFilter } = req.query;
+    const { category, warehouseId, status, search, isPharma, expiryFilter, region } = req.query;
+    let list = Store.getBatches(region);
 
     if (category) list = list.filter(b => b.category === category);
     if (warehouseId) list = list.filter(b => b.warehouseId === warehouseId);

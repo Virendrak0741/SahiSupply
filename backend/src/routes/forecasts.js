@@ -46,7 +46,8 @@ router.get("/history", (req, res) => {
 // GET /api/forecast/destinations
 router.get("/destinations", (req, res) => {
   try {
-    const destinations = Store.getDestinations();
+    const region = req.query.region;
+    const destinations = Store.getDestinations(region);
     res.json({ success: true, data: destinations });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

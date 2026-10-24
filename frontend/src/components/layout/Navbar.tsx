@@ -98,12 +98,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               onChange={(e) => onRegionChange(e.target.value)}
               className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
             >
-              <option value="All">All Maharashtra Regions</option>
-              <option value="Pune">Pune Region</option>
-              <option value="Mumbai">Mumbai Metro Hub</option>
-              <option value="Nashik">Nashik Region</option>
-              <option value="Kolhapur">Kolhapur South</option>
-              <option value="Nagpur">Nagpur Central Hub</option>
+              <option value="All">🇮🇳 All India (National Network)</option>
+              <option value="North">🏔️ North Region (Delhi-NCR / Haryana / UP)</option>
+              <option value="West">🌊 West Region (Mumbai / Pune / Gujarat)</option>
+              <option value="South">🌴 South Region (Bengaluru / Hyderabad / Chennai)</option>
+              <option value="East">🌅 East Region (Kolkata / West Bengal)</option>
             </select>
           </div>
         </div>

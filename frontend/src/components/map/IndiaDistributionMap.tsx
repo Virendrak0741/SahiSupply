@@ -53,9 +53,10 @@ export interface GeoLocation {
 }
 
 interface IndiaMapProps {
-  recommendations?: Recommendation[];
+  recommendations?: any[];
   onRunOptimization?: () => Promise<void> | void;
   isOptimizing?: boolean;
+  selectedRegion?: string;
 }
 
 // Map Controller for Smooth FlyTo Navigation
@@ -136,7 +137,8 @@ const createCustomIcon = (
 export const IndiaDistributionMap: React.FC<IndiaMapProps> = ({
   recommendations = [],
   onRunOptimization,
-  isOptimizing = false
+  isOptimizing = false,
+  selectedRegion
 }) => {
   // State
   const [locations, setLocations] = useState<GeoLocation[]>([]);
@@ -154,9 +156,9 @@ export const IndiaDistributionMap: React.FC<IndiaMapProps> = ({
   const [animationProgress, setAnimationProgress] = useState<number>(0);
   const [selectedRoute, setSelectedRoute] = useState<any | null>(null);
 
-  // Map viewport center & zoom
-  const [mapCenter, setMapCenter] = useState<[number, number]>([19.2, 74.5]); // Maharashtra default center
-  const [mapZoom, setMapZoom] = useState<number>(7);
+  // Map viewport center & zoom (Pan-India National Overview)
+  const [mapCenter, setMapCenter] = useState<[number, number]>([22.5937, 78.9629]);
+  const [mapZoom, setMapZoom] = useState<number>(5);
 
   // Optimization Step Visualizer
   const [optStep, setOptStep] = useState<number>(0);
@@ -164,6 +166,32 @@ export const IndiaDistributionMap: React.FC<IndiaMapProps> = ({
   // Animation frame loop
   const animFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(performance.now());
+
+  // Listen to selectedRegion from global navigation
+  useEffect(() => {
+    if (!selectedRegion) return;
+    if (selectedRegion === 'North') {
+      setMapCenter([28.6139, 77.2090]);
+      setMapZoom(8);
+      setSelectedState('Delhi-NCR');
+    } else if (selectedRegion === 'West') {
+      setMapCenter([19.2967, 73.0631]);
+      setMapZoom(7);
+      setSelectedState('Maharashtra');
+    } else if (selectedRegion === 'South') {
+      setMapCenter([13.0978, 77.5922]);
+      setMapZoom(7);
+      setSelectedState('Karnataka');
+    } else if (selectedRegion === 'East') {
+      setMapCenter([22.5726, 88.3639]);
+      setMapZoom(8);
+      setSelectedState('West Bengal');
+    } else if (selectedRegion === 'All') {
+      setMapCenter([22.5937, 78.9629]);
+      setMapZoom(5);
+      setSelectedState('All');
+    }
+  }, [selectedRegion]);
 
   // Fetch verified real locations from backend API
   useEffect(() => {

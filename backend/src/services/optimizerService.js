@@ -13,6 +13,7 @@ function runDistributionOptimization({
   selectedCategories = [],
   selectedWarehouseIds = [],
   selectedDestinationIds = [],
+  selectedRegion = null,
   transportationBudgetINR = null,
   transportationWeight = 0.35,
   stockoutWeight = 0.40,
@@ -29,18 +30,24 @@ function runDistributionOptimization({
   const allRoutes = Store.getRoutes();
   const settings = Store.getSettings();
 
-  // Filter entities according to user configuration
+  // Filter entities according to user configuration and region
   const products = selectedCategories.length > 0
     ? allProducts.filter(p => selectedCategories.includes(p.category))
     : allProducts;
 
-  const warehouses = selectedWarehouseIds.length > 0
-    ? allWarehouses.filter(w => selectedWarehouseIds.includes(w.id))
-    : allWarehouses;
+  let warehouses = allWarehouses;
+  if (selectedWarehouseIds.length > 0) {
+    warehouses = allWarehouses.filter(w => selectedWarehouseIds.includes(w.id));
+  } else if (selectedRegion && selectedRegion !== "All") {
+    warehouses = allWarehouses.filter(w => w.region === selectedRegion);
+  }
 
-  const destinations = selectedDestinationIds.length > 0
-    ? allDestinations.filter(d => selectedDestinationIds.includes(d.id))
-    : allDestinations;
+  let destinations = allDestinations;
+  if (selectedDestinationIds.length > 0) {
+    destinations = allDestinations.filter(d => selectedDestinationIds.includes(d.id));
+  } else if (selectedRegion && selectedRegion !== "All") {
+    destinations = allDestinations.filter(d => d.region === selectedRegion);
+  }
 
   const warehouseIds = new Set(warehouses.map(w => w.id));
   const destinationIds = new Set(destinations.map(d => d.id));

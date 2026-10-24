@@ -41,15 +41,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ selectedRegion, se
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [selectedRegion]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      const query = selectedRegion && selectedRegion !== 'All' ? `?region=${selectedRegion}` : '';
       const [dashRes, whRes, destRes] = await Promise.all([
-        fetch('/api/analytics/dashboard'),
-        fetch('/api/warehouses'),
-        fetch('/api/forecast/destinations')
+        fetch(`/api/analytics/dashboard${query}`),
+        fetch(`/api/warehouses${query}`),
+        fetch(`/api/locations${query}`)
       ]);
 
       const dashJson = await dashRes.json();
@@ -89,6 +90,35 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ selectedRegion, se
 
   return (
     <div className="space-y-6 pb-12">
+      {/* Regional Operational Intelligence Context Banner */}
+      <div className="bg-gradient-to-r from-blue-900/90 via-indigo-900/90 to-slate-900 text-white p-4 rounded-xl shadow-sm border border-blue-800/40 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="p-2.5 bg-blue-500/20 rounded-lg text-blue-400 border border-blue-400/20 shrink-0">
+            <MapPin className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-blue-300">Active Supply Corridor</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/30 text-blue-200 border border-blue-400/30">
+                {selectedRegion === 'All' ? 'Pan-India Network' : `${selectedRegion} Region`}
+              </span>
+            </div>
+            <h2 className="text-sm md:text-base font-bold text-white mt-0.5">
+              {data.regionalContext?.macroContext || "Authentic Pan-India Multi-Corridor Logistics Network"}
+            </h2>
+            <p className="text-xs text-blue-200/80 mt-0.5 line-clamp-1">
+              <strong>Demand Profile:</strong> {data.regionalContext?.primaryDrivers || "Balanced multi-state consumption."}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
+          <div className="text-right">
+            <div className="text-[10px] uppercase tracking-wider text-slate-300">Corridor Efficiency</div>
+            <div className="text-lg font-bold font-mono text-emerald-400">{data.kpis.allocationEfficiency}%</div>
+          </div>
+        </div>
+      </div>
+
       {/* 1.1 Top KPI Metric Cards (6 Main Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* KPI 1: Total Inventory */}
@@ -147,7 +177,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ selectedRegion, se
           </div>
           <div className="mt-2 flex items-center gap-1.5 text-xs text-red-600 font-medium">
             <span>Critical</span>
-            <span className="text-slate-400 font-normal">Kolhapur & Nashik</span>
+            <span className="text-slate-400 font-normal">
+              {selectedRegion === 'North' ? 'Delhi & Saket Hubs' :
+               selectedRegion === 'South' ? 'Indiranagar & Jubilee Hills' :
+               selectedRegion === 'West' ? 'Kandivali & Bodakdev' :
+               selectedRegion === 'East' ? 'Park Street & Gariahat' :
+               'Regional Hubs Identified'}
+            </span>
           </div>
         </div>
 
@@ -281,7 +317,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ selectedRegion, se
         {/* View Container: Map vs 3D Canvas vs 2D Schematic */}
         <div className="mt-4">
           {viewMode === 'MAP' ? (
-            <IndiaDistributionMap />
+            <IndiaDistributionMap
+              selectedRegion={selectedRegion}
+              recommendations={data?.recentRecommendations || []}
+            />
           ) : viewMode === '3D' ? (
             <NetworkScene3D
               warehouses={filteredWarehouses}
