@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { DemandScene3D } from '../components/3d/DemandScene3D';
 import { Product, ProductCategory, Destination } from '../types';
+import { apiFetch, getApiUrl } from '../utils/api';
 
 interface ForecastingPageProps {
   selectedRegion: string;
@@ -46,19 +47,18 @@ export const ForecastingPage: React.FC<ForecastingPageProps> = ({ selectedRegion
 
   const fetchInitialData = async () => {
     try {
-      const q = selectedRegion !== 'All' ? `?region=${selectedRegion}` : '';
-      const [prodRes, destRes] = await Promise.all([
-        fetch('/api/inventory/products'),
-        fetch(`/api/forecast/destinations${q}`)
+      const q = selectedRegion !== 'All' ? `?region=${encodeURIComponent(selectedRegion)}` : '';
+      const [prodRes, destRes] = await Promise.allSettled([
+        apiFetch<{ success: boolean; data: Product[] }>('/api/inventory/products'),
+        apiFetch<{ success: boolean; data: Destination[] }>(`/api/forecast/destinations${q}`)
       ]);
 
-      const prodJson = await prodRes.json();
-      const destJson = await destRes.json();
-
-      if (prodJson.success && prodJson.data.length > 0) {
-        setProducts(prodJson.data);
+      if (prodRes.status === 'fulfilled' && prodRes.value?.success && prodRes.value.data.length > 0) {
+        setProducts(prodRes.value.data);
       }
-      if (destJson.success) setDestinations(destJson.data);
+      if (destRes.status === 'fulfilled' && destRes.value?.success) {
+        setDestinations(destRes.value.data);
+      }
 
       // Auto-trigger default forecast run
       executeForecastRun('Exponential Smoothing', 7);
@@ -75,7 +75,7 @@ export const ForecastingPage: React.FC<ForecastingPageProps> = ({ selectedRegion
   ) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/forecast/generate', {
+      const res = await fetch(getApiUrl('/api/forecast/generate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

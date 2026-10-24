@@ -30,6 +30,7 @@ import {
   Compass
 } from 'lucide-react';
 import { Recommendation } from '../../types';
+import { apiFetch } from '../../utils/api';
 
 export interface GeoLocation {
   id: string;
@@ -201,9 +202,8 @@ export const IndiaDistributionMap: React.FC<IndiaMapProps> = ({
   const fetchLocations = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/locations');
-      const json = await res.json();
-      if (json.success) {
+      const json = await apiFetch<{ success: boolean; data: GeoLocation[] }>('/api/locations');
+      if (json && json.success && Array.isArray(json.data)) {
         setLocations(json.data);
       }
     } catch (err) {

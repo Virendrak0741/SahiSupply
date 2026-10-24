@@ -27,6 +27,7 @@ import {
   Recommendation,
   ProductCategory
 } from '../types';
+import { apiFetch, getApiUrl } from '../utils/api';
 
 interface OptimizerPageProps {
   selectedRegion: string;
@@ -73,22 +74,23 @@ export const OptimizerPage: React.FC<OptimizerPageProps> = ({ selectedRegion }) 
 
   const fetchInitialSetup = async () => {
     try {
-      const q = selectedRegion !== 'All' ? `?region=${selectedRegion}` : '';
-      const [whRes, destRes, planRes] = await Promise.all([
-        fetch(`/api/warehouses${q}`),
-        fetch(`/api/forecast/destinations${q}`),
-        fetch('/api/optimize/plans')
+      const q = selectedRegion !== 'All' ? `?region=${encodeURIComponent(selectedRegion)}` : '';
+      const [whRes, destRes, planRes] = await Promise.allSettled([
+        apiFetch<{ success: boolean; data: Warehouse[] }>(`/api/warehouses${q}`),
+        apiFetch<{ success: boolean; data: Destination[] }>(`/api/forecast/destinations${q}`),
+        apiFetch<{ success: boolean; data: DistributionPlan[] }>('/api/optimize/plans')
       ]);
 
-      const whJson = await whRes.json();
-      const destJson = await destRes.json();
-      const planJson = await planRes.json();
+      if (whRes.status === 'fulfilled' && whRes.value?.success) setWarehouses(whRes.value.data);
+      if (destRes.status === 'fulfilled' && destRes.value?.success) setDestinations(destRes.value.data);
 
-      if (whJson.success) setWarehouses(whJson.data);
-      if (destJson.success) setDestinations(destJson.data);
-
-      if (planJson.success && planJson.data.length > 0 && selectedRegion === 'All') {
-        setPlan(planJson.data[0]);
+      if (
+        planRes.status === 'fulfilled' &&
+        planRes.value?.success &&
+        planRes.value.data.length > 0 &&
+        selectedRegion === 'All'
+      ) {
+        setPlan(planRes.value.data[0]);
       } else {
         // Run optimization for this region automatically so the page is populated
         executeOptimizationRun();
@@ -101,7 +103,7 @@ export const OptimizerPage: React.FC<OptimizerPageProps> = ({ selectedRegion }) 
   const executeOptimizationRun = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/optimize/run', {
+      const res = await fetch(getApiUrl('/api/optimize/run'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -131,7 +133,7 @@ export const OptimizerPage: React.FC<OptimizerPageProps> = ({ selectedRegion }) 
     if (!plan) return;
     try {
       setApprovalLoading(true);
-      const res = await fetch(`/api/optimize/plans/${plan.id || plan.planId}/approve`, {
+      const res = await fetch(getApiUrl(`/api/optimize/plans/${plan.id || plan.planId}/approve`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ approver: 'Supply Chain Operations Director' })
@@ -152,7 +154,7 @@ export const OptimizerPage: React.FC<OptimizerPageProps> = ({ selectedRegion }) 
     if (!plan) return;
     if (!confirm('Are you sure you want to reject this optimization plan?')) return;
     try {
-      const res = await fetch(`/api/optimize/plans/${plan.id || plan.planId}/reject`, {
+      const res = await fetch(getApiUrl(`/api/optimize/plans/${plan.id || plan.planId}/reject`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: 'Manual review rejected proposed routes.' })
@@ -172,7 +174,7 @@ export const OptimizerPage: React.FC<OptimizerPageProps> = ({ selectedRegion }) 
     if (!plan || !editingRec) return;
 
     try {
-      const res = await fetch(`/api/optimize/plans/${plan.id || plan.planId}/edit-allocation`, {
+      const res = await fetch(getApiUrl(`/api/optimize/plans/${plan.id || plan.planId}/edit-allocation`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

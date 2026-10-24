@@ -24,6 +24,7 @@ import {
 import { NetworkScene3D } from '../components/3d/NetworkScene3D';
 import { IndiaDistributionMap } from '../components/map/IndiaDistributionMap';
 import { DashboardData, Warehouse, Destination } from '../types';
+import { apiFetch } from '../utils/api';
 
 interface DashboardPageProps {
   selectedRegion: string;
@@ -46,20 +47,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ selectedRegion, se
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const query = selectedRegion && selectedRegion !== 'All' ? `?region=${selectedRegion}` : '';
-      const [dashRes, whRes, destRes] = await Promise.all([
-        fetch(`/api/analytics/dashboard${query}`),
-        fetch(`/api/warehouses${query}`),
-        fetch(`/api/locations${query}`)
+      const query = selectedRegion && selectedRegion !== 'All' ? `?region=${encodeURIComponent(selectedRegion)}` : '';
+      const [dashRes, whRes, destRes] = await Promise.allSettled([
+        apiFetch<DashboardData>(`/api/analytics/dashboard${query}`),
+        apiFetch<{ success: boolean; data: Warehouse[] }>(`/api/warehouses${query}`),
+        apiFetch<{ success: boolean; data: Destination[] }>(`/api/locations${query}`)
       ]);
 
-      const dashJson = await dashRes.json();
-      const whJson = await whRes.json();
-      const destJson = await destRes.json();
-
-      if (dashJson.success) setData(dashJson);
-      if (whJson.success) setWarehouses(whJson.data);
-      if (destJson.success) setDestinations(destJson.data);
+      if (dashRes.status === 'fulfilled' && dashRes.value) {
+        setData(dashRes.value);
+      }
+      if (whRes.status === 'fulfilled' && whRes.value?.success) {
+        setWarehouses(whRes.value.data);
+      }
+      if (destRes.status === 'fulfilled' && destRes.value?.success) {
+        setDestinations(destRes.value.data);
+      }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     } finally {

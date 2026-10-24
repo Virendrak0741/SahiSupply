@@ -17,6 +17,7 @@ import {
   Truck,
   Cpu
 } from 'lucide-react';
+import { apiFetch, getApiUrl } from '../utils/api';
 
 export const DatabaseExplorerPage: React.FC = () => {
   const [collectionsSummary, setCollectionsSummary] = useState<any[]>([]);
@@ -40,9 +41,8 @@ export const DatabaseExplorerPage: React.FC = () => {
   const fetchSummary = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/database/summary');
-      const json = await res.json();
-      if (json.success) {
+      const json = await apiFetch<any>('/api/database/summary');
+      if (json && json.success) {
         setCollectionsSummary(json.collections);
       }
     } catch (err) {
@@ -54,9 +54,8 @@ export const DatabaseExplorerPage: React.FC = () => {
 
   const fetchCollectionData = async (colName: string) => {
     try {
-      const res = await fetch(`/api/database/collections/${colName}`);
-      const json = await res.json();
-      if (json.success) {
+      const json = await apiFetch<any>(`/api/database/collections/${colName}`);
+      if (json && json.success) {
         setCollectionData(json.data);
       }
     } catch (err) {
@@ -66,9 +65,8 @@ export const DatabaseExplorerPage: React.FC = () => {
 
   const fetchSqlSchema = async () => {
     try {
-      const res = await fetch('/api/database/schema');
-      const json = await res.json();
-      if (json.success) {
+      const json = await apiFetch<any>('/api/database/schema');
+      if (json && json.success) {
         setSqlSchema(json.sql);
       }
     } catch (err) {

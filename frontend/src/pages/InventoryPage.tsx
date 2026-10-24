@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { WarehouseScene3D } from '../components/3d/WarehouseScene3D';
 import { InventoryBatch, Warehouse, ProductCategory, Product } from '../types';
+import { apiFetch, getApiUrl } from '../utils/api';
 
 interface InventoryPageProps {
   selectedRegion: string;
@@ -69,26 +70,24 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ selectedRegion, se
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      const q = selectedRegion && selectedRegion !== 'All' ? `?region=${selectedRegion}` : '';
-      const [batchRes, whRes, prodRes] = await Promise.all([
-        fetch(`/api/inventory/batches${q}`),
-        fetch(`/api/warehouses${q}`),
-        fetch('/api/inventory/products')
+      const q = selectedRegion && selectedRegion !== 'All' ? `?region=${encodeURIComponent(selectedRegion)}` : '';
+      const [batchRes, whRes, prodRes] = await Promise.allSettled([
+        apiFetch<{ success: boolean; data: InventoryBatch[] }>(`/api/inventory/batches${q}`),
+        apiFetch<{ success: boolean; data: Warehouse[] }>(`/api/warehouses${q}`),
+        apiFetch<{ success: boolean; data: Product[] }>('/api/inventory/products')
       ]);
 
-      const batchJson = await batchRes.json();
-      const whJson = await whRes.json();
-      const prodJson = await prodRes.json();
-
-      if (batchJson.success) setBatches(batchJson.data);
-      if (whJson.success) {
-        setWarehouses(whJson.data);
-        if (whJson.data.length > 0) setSelectedWarehouse(whJson.data[0]);
+      if (batchRes.status === 'fulfilled' && batchRes.value?.success) {
+        setBatches(batchRes.value.data);
       }
-      if (prodJson.success) {
-        setProducts(prodJson.data);
-        if (prodJson.data.length > 0) {
-          setNewBatchData(prev => ({ ...prev, productId: prodJson.data[0].id }));
+      if (whRes.status === 'fulfilled' && whRes.value?.success) {
+        setWarehouses(whRes.value.data);
+        if (whRes.value.data.length > 0) setSelectedWarehouse(whRes.value.data[0]);
+      }
+      if (prodRes.status === 'fulfilled' && prodRes.value?.success) {
+        setProducts(prodRes.value.data);
+        if (prodRes.value.data.length > 0) {
+          setNewBatchData(prev => ({ ...prev, productId: prodRes.value.data[0].id }));
         }
       }
     } catch (err) {
@@ -132,13 +131,13 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ selectedRegion, se
   });
 
   const handleExportCSV = () => {
-    window.location.href = '/api/inventory/export-csv';
+    window.location.href = getApiUrl('/api/inventory/export-csv');
   };
 
   const handleCreateBatch = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/inventory/batches', {
+      const res = await fetch(getApiUrl('/api/inventory/batches'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newBatchData)
@@ -160,7 +159,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ selectedRegion, se
     if (!selectedBatchForTransfer) return;
 
     try {
-      const res = await fetch('/api/inventory/transfer', {
+      const res = await fetch(getApiUrl('/api/inventory/transfer'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

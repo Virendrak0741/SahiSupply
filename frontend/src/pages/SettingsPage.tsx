@@ -8,6 +8,7 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
+import { apiFetch, getApiUrl } from '../utils/api';
 
 export const SettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<any>(null);
@@ -22,9 +23,8 @@ export const SettingsPage: React.FC = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/settings');
-      const json = await res.json();
-      if (json.success) {
+      const json = await apiFetch<any>('/api/settings');
+      if (json && json.success) {
         setSettings(json.settings);
         setAuditLogs(json.auditLogs || []);
       }
@@ -39,7 +39,7 @@ export const SettingsPage: React.FC = () => {
     e.preventDefault();
     try {
       setSaving(true);
-      const res = await fetch('/api/settings', {
+      const res = await fetch(getApiUrl('/api/settings'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
@@ -58,7 +58,7 @@ export const SettingsPage: React.FC = () => {
   const handleResetData = async () => {
     if (!confirm('Are you sure you want to reseed the entire SahiSupply database with fresh initial records?')) return;
     try {
-      const res = await fetch('/api/settings/reset', { method: 'POST' });
+      const res = await fetch(getApiUrl('/api/settings/reset'), { method: 'POST' });
       const json = await res.json();
       if (json.success) {
         alert('Database reseeded successfully! Reloading...');
