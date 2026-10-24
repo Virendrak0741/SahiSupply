@@ -1,0 +1,522 @@
+[
+  {
+    "id": "DIST-PUNE-01",
+    "name": "Sahyadri FMCG Distributors",
+    "region": "Pune",
+    "coordinates": {
+      "x": 1,
+      "z": 1
+    },
+    "type": "Distributor",
+    "capacityUnits": 25000,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DIST-MUMBAI-01",
+    "name": "MetroWest Supply Partners",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -5,
+      "z": -3
+    },
+    "type": "Distributor",
+    "capacityUnits": 35000,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DIST-MUMBAI-02",
+    "name": "Harbour Wholesale Logistics",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -4,
+      "z": -5
+    },
+    "type": "Distributor",
+    "capacityUnits": 28000,
+    "hasColdChain": false,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DIST-NASHIK-01",
+    "name": "Godavari Valley Agencies",
+    "region": "Nashik",
+    "coordinates": {
+      "x": -1,
+      "z": -7
+    },
+    "type": "Distributor",
+    "capacityUnits": 20000,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DIST-KOLHAPUR-01",
+    "name": "Panchganga Trade Links",
+    "region": "Kolhapur",
+    "coordinates": {
+      "x": 3,
+      "z": 7
+    },
+    "type": "Distributor",
+    "capacityUnits": 18000,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DIST-NAGPUR-01",
+    "name": "Vidarbha Apex Distributors",
+    "region": "Nagpur",
+    "coordinates": {
+      "x": 9,
+      "z": -2
+    },
+    "type": "Distributor",
+    "capacityUnits": 30000,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DIST-THANE-01",
+    "name": "Thane Belt Consumer Wholesale",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -4.5,
+      "z": -2.5
+    },
+    "type": "Distributor",
+    "capacityUnits": 22000,
+    "hasColdChain": false,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DIST-SOLAPUR-01",
+    "name": "Solapur Regional Hub Partners",
+    "region": "Kolhapur",
+    "coordinates": {
+      "x": 4.5,
+      "z": 4
+    },
+    "type": "Distributor",
+    "capacityUnits": 15000,
+    "hasColdChain": false,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DIST-AURANGABAD-01",
+    "name": "Marathwada Central Supply",
+    "region": "Nashik",
+    "coordinates": {
+      "x": 3,
+      "z": -5
+    },
+    "type": "Distributor",
+    "capacityUnits": 20000,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DIST-SATARA-01",
+    "name": "Krishna Valley Distributors",
+    "region": "Pune",
+    "coordinates": {
+      "x": 1.5,
+      "z": 4.5
+    },
+    "type": "Distributor",
+    "capacityUnits": 14000,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-PUN-01",
+    "name": "Apollo 24x7 Pharmacy Kothrud",
+    "type": "Pharmacy",
+    "region": "Pune",
+    "coordinates": {
+      "x": 0.8,
+      "z": 0.5
+    },
+    "capacityUnits": 4500,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-PUN-02",
+    "name": "MedPlus Wellness Pharmacy Viman Nagar",
+    "type": "Pharmacy",
+    "region": "Pune",
+    "coordinates": {
+      "x": 1.2,
+      "z": -0.4
+    },
+    "capacityUnits": 4000,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-PUN-03",
+    "name": "Reliance Smart Bazaar Baner",
+    "type": "Hypermarket",
+    "region": "Pune",
+    "coordinates": {
+      "x": -0.6,
+      "z": 0.2
+    },
+    "capacityUnits": 12000,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-PUN-04",
+    "name": "DMart Mega Store Hinjewadi",
+    "type": "Retail Store",
+    "region": "Pune",
+    "coordinates": {
+      "x": -1.2,
+      "z": 0.8
+    },
+    "capacityUnits": 15000,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-PUN-05",
+    "name": "Noble Chemist Swargate",
+    "type": "Pharmacy",
+    "region": "Pune",
+    "coordinates": {
+      "x": 0.2,
+      "z": 1.2
+    },
+    "capacityUnits": 3800,
+    "hasColdChain": false,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-PUN-06",
+    "name": "Nature's Basket Koregaon Park",
+    "type": "Retail Store",
+    "region": "Pune",
+    "coordinates": {
+      "x": 0.9,
+      "z": -0.2
+    },
+    "capacityUnits": 6500,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-MUM-01",
+    "name": "Apollo Pharmacy Bandra West",
+    "type": "Pharmacy",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -6.5,
+      "z": -3.8
+    },
+    "capacityUnits": 5000,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-MUM-02",
+    "name": "Wellness Forever 24x7 Andheri",
+    "type": "Pharmacy",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -6.2,
+      "z": -4.5
+    },
+    "capacityUnits": 5500,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-MUM-03",
+    "name": "Lilavati Hospital Pharmacy Wing",
+    "type": "Pharmacy",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -6.8,
+      "z": -3.5
+    },
+    "capacityUnits": 4200,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-MUM-04",
+    "name": "DMart Ready Malad West",
+    "type": "Retail Store",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -5.8,
+      "z": -5.2
+    },
+    "capacityUnits": 11000,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-MUM-05",
+    "name": "Star Bazaar Chembur Metro",
+    "type": "Hypermarket",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -5.1,
+      "z": -3.6
+    },
+    "capacityUnits": 14000,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-MUM-06",
+    "name": "Nature's Gourmet Juhu",
+    "type": "Retail Store",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -6.4,
+      "z": -4.1
+    },
+    "capacityUnits": 7200,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-MUM-07",
+    "name": "MedPlus Chemist Borivali",
+    "type": "Pharmacy",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -5.7,
+      "z": -5.9
+    },
+    "capacityUnits": 3600,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-MUM-08",
+    "name": "BigBasket Instant Dark Store Powai",
+    "type": "Retail Store",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -4.8,
+      "z": -4.3
+    },
+    "capacityUnits": 8500,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-NSK-01",
+    "name": "Apollo Pharmacy College Road Nashik",
+    "type": "Pharmacy",
+    "region": "Nashik",
+    "coordinates": {
+      "x": -1.8,
+      "z": -7.5
+    },
+    "capacityUnits": 3500,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-NSK-02",
+    "name": "D-Mart Panchavati",
+    "type": "Retail Store",
+    "region": "Nashik",
+    "coordinates": {
+      "x": -2.3,
+      "z": -8.3
+    },
+    "capacityUnits": 9500,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-NSK-03",
+    "name": "Sancheti Chemist Indira Nagar",
+    "type": "Pharmacy",
+    "region": "Nashik",
+    "coordinates": {
+      "x": -1.5,
+      "z": -8.1
+    },
+    "capacityUnits": 3000,
+    "hasColdChain": false,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-NSK-04",
+    "name": "Reliance Fresh Mahatma Nagar",
+    "type": "Retail Store",
+    "region": "Nashik",
+    "coordinates": {
+      "x": -2.6,
+      "z": -7.2
+    },
+    "capacityUnits": 6000,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-NSK-05",
+    "name": "Kusum Supermarket Gangapur Road",
+    "type": "Retail Store",
+    "region": "Nashik",
+    "coordinates": {
+      "x": -1.9,
+      "z": -6.9
+    },
+    "capacityUnits": 4500,
+    "hasColdChain": false,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-KOL-01",
+    "name": "Apollo Pharmacy Rajarampuri",
+    "type": "Pharmacy",
+    "region": "Kolhapur",
+    "coordinates": {
+      "x": 2.2,
+      "z": 7.6
+    },
+    "capacityUnits": 3200,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-KOL-02",
+    "name": "D-Mart Tarabai Park Kolhapur",
+    "type": "Retail Store",
+    "region": "Kolhapur",
+    "coordinates": {
+      "x": 1.6,
+      "z": 8.4
+    },
+    "capacityUnits": 8800,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-KOL-03",
+    "name": "Chhatrapati Shahu City Chemist",
+    "type": "Pharmacy",
+    "region": "Kolhapur",
+    "coordinates": {
+      "x": 2.5,
+      "z": 8.1
+    },
+    "capacityUnits": 2800,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-KOL-04",
+    "name": "Reliance Smart Point Nagala Park",
+    "type": "Retail Store",
+    "region": "Kolhapur",
+    "coordinates": {
+      "x": 1.8,
+      "z": 7.3
+    },
+    "capacityUnits": 5200,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-KOL-05",
+    "name": "Mahalaxmi Daily Provisions",
+    "type": "Retail Store",
+    "region": "Kolhapur",
+    "coordinates": {
+      "x": 2.7,
+      "z": 8.7
+    },
+    "capacityUnits": 3900,
+    "hasColdChain": false,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-NGP-01",
+    "name": "Apollo Pharmacy Dharampeth Nagpur",
+    "type": "Pharmacy",
+    "region": "Nagpur",
+    "coordinates": {
+      "x": 9.8,
+      "z": -3.2
+    },
+    "capacityUnits": 4000,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-NGP-02",
+    "name": "AIIMS Hospital Pharmacy Wing Nagpur",
+    "type": "Pharmacy",
+    "region": "Nagpur",
+    "coordinates": {
+      "x": 10.5,
+      "z": -2.6
+    },
+    "capacityUnits": 6000,
+    "hasColdChain": true,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-NGP-03",
+    "name": "DMart Supermarket Wardha Road",
+    "type": "Retail Store",
+    "region": "Nagpur",
+    "coordinates": {
+      "x": 9.4,
+      "z": -2.2
+    },
+    "capacityUnits": 10500,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-NGP-04",
+    "name": "Reliance Smart Bazaar Ramdaspeth",
+    "type": "Hypermarket",
+    "region": "Nagpur",
+    "coordinates": {
+      "x": 10.2,
+      "z": -3.6
+    },
+    "capacityUnits": 13000,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  },
+  {
+    "id": "DEST-NGP-05",
+    "name": "Orange City Druggist Medicals",
+    "type": "Pharmacy",
+    "region": "Nagpur",
+    "coordinates": {
+      "x": 9.6,
+      "z": -3.9
+    },
+    "capacityUnits": 3400,
+    "hasColdChain": false,
+    "hasPharmaLicense": true
+  },
+  {
+    "id": "DEST-NGP-06",
+    "name": "BigBazaar Sitabuldi Junction",
+    "type": "Retail Store",
+    "region": "Nagpur",
+    "coordinates": {
+      "x": 10.1,
+      "z": -2.9
+    },
+    "capacityUnits": 8000,
+    "hasColdChain": true,
+    "hasPharmaLicense": false
+  }
+]

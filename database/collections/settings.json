@@ -1,0 +1,22 @@
+{
+  "safetyStockDays": 5,
+  "stockoutPenaltyPerUnitINR": 150,
+  "holdingCostPerUnitPerDayINR": 1.25,
+  "expiryCostMultiplier": 1,
+  "transportationWeight": 0.35,
+  "stockoutWeight": 0.4,
+  "expiryWeight": 0.25,
+  "defaultForecastHorizonDays": 7,
+  "defaultForecastModel": "Exponential Smoothing",
+  "maxShipmentCapPerRun": 50,
+  "minShelfLifeBufferDays": 14,
+  "coldChainEnforcementStrict": true,
+  "gdpTraceabilityRequired": true,
+  "assumptions": [
+    "Distances are calculated using road-network euclidean metric scaled by 1.25 winding factor.",
+    "Reefer cold-chain transportation incurs a 65% freight premium over standard dry logistics.",
+    "Expired batches and batches failing minimum shelf-life threshold are strictly ineligible for shipment.",
+    "Destinations without cold-storage licensing cannot receive cold-chain sensitive pharmaceuticals or dairy items.",
+    "Historical demand reflects 90 days of simulated retail consumption and distributor pull data."
+  ]
+}

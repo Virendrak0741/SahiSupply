@@ -1,0 +1,85 @@
+/* Leaflet Core CSS */
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#F8FAFC] text-[#172033] font-sans;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Warehouse Marker Pulse Animation */
+@keyframes warehousePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(37, 99, 235, 0);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    transform: scale(1);
+  }
+}
+
+.animate-warehouse-pulse {
+  animation: warehousePulse 2.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Stockout Risk Warning Halo Animation */
+@keyframes riskHalo {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.35;
+  }
+}
+
+.animate-risk-halo {
+  animation: riskHalo 1.8s infinite ease-in-out;
+}
+
+/* Animated Route Line Dash Flow */
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+.animate-route-flow {
+  stroke-dasharray: 8 6;
+  animation: dashFlow 1.2s linear infinite;
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .animate-warehouse-pulse,
+  .animate-risk-halo,
+  .animate-route-flow {
+    animation: none !important;
+  }
+}

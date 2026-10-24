@@ -1,0 +1,130 @@
+[
+  {
+    "id": "WH-PUNE-01",
+    "name": "Pune Central Fulfillment Hub",
+    "location": "Chakan Industrial Zone, Pune",
+    "region": "Pune",
+    "coordinates": {
+      "x": 0,
+      "z": 0,
+      "lat": 18.5204,
+      "lng": 73.8567
+    },
+    "totalCapacityUnits": 150000,
+    "coldStorageCapacityUnits": 35000,
+    "handlingCapabilities": [
+      "Standard Dry",
+      "Cold Chain Reefer",
+      "Pharmaceutical GDP",
+      "Hazardous Detergents"
+    ],
+    "coldStorageAvailable": true,
+    "fleetSizeTrucks": 28,
+    "activeInboundShipments": 4,
+    "activeOutboundShipments": 9,
+    "managerName": "Vikram Deshmukh",
+    "contactPhone": "+91-98220-44911"
+  },
+  {
+    "id": "WH-MUMBAI-01",
+    "name": "Mumbai Metropolitan Mega Logistics Hub",
+    "location": "Bhiwandi Logistics Park, Mumbai",
+    "region": "Mumbai",
+    "coordinates": {
+      "x": -6,
+      "z": -4,
+      "lat": 19.076,
+      "lng": 72.8777
+    },
+    "totalCapacityUnits": 200000,
+    "coldStorageCapacityUnits": 50000,
+    "handlingCapabilities": [
+      "Standard Dry",
+      "Cold Chain Reefer",
+      "Pharmaceutical GDP",
+      "Cross-Docking Fast Track"
+    ],
+    "coldStorageAvailable": true,
+    "fleetSizeTrucks": 45,
+    "activeInboundShipments": 8,
+    "activeOutboundShipments": 14,
+    "managerName": "Rajeshwar Shinde",
+    "contactPhone": "+91-98200-11234"
+  },
+  {
+    "id": "WH-NASHIK-01",
+    "name": "Nashik North Distribution Gateway",
+    "location": "Ambad MIDC, Nashik",
+    "region": "Nashik",
+    "coordinates": {
+      "x": -2,
+      "z": -8,
+      "lat": 19.9975,
+      "lng": 73.7898
+    },
+    "totalCapacityUnits": 90000,
+    "coldStorageCapacityUnits": 15000,
+    "handlingCapabilities": [
+      "Standard Dry",
+      "Cold Chain Reefer",
+      "Agricultural Agro-Pack"
+    ],
+    "coldStorageAvailable": true,
+    "fleetSizeTrucks": 18,
+    "activeInboundShipments": 2,
+    "activeOutboundShipments": 5,
+    "managerName": "Anand Godse",
+    "contactPhone": "+91-98230-88321"
+  },
+  {
+    "id": "WH-KOLHAPUR-01",
+    "name": "Kolhapur South Supply Depot",
+    "location": "Shiroli MIDC, Kolhapur",
+    "region": "Kolhapur",
+    "coordinates": {
+      "x": 2,
+      "z": 8,
+      "lat": 16.705,
+      "lng": 74.2433
+    },
+    "totalCapacityUnits": 80000,
+    "coldStorageCapacityUnits": 12000,
+    "handlingCapabilities": [
+      "Standard Dry",
+      "Cold Chain Reefer",
+      "Dairy & Agro Hub"
+    ],
+    "coldStorageAvailable": true,
+    "fleetSizeTrucks": 14,
+    "activeInboundShipments": 3,
+    "activeOutboundShipments": 4,
+    "managerName": "Sunil Patil",
+    "contactPhone": "+91-98210-99412"
+  },
+  {
+    "id": "WH-NAGPUR-01",
+    "name": "Nagpur Central Multi-Modal Logistics Center",
+    "location": "MIHAN SEZ, Nagpur",
+    "region": "Nagpur",
+    "coordinates": {
+      "x": 10,
+      "z": -3,
+      "lat": 21.1458,
+      "lng": 79.0882
+    },
+    "totalCapacityUnits": 120000,
+    "coldStorageCapacityUnits": 25000,
+    "handlingCapabilities": [
+      "Standard Dry",
+      "Cold Chain Reefer",
+      "Pharmaceutical GDP",
+      "Long-Haul Rail Freight"
+    ],
+    "coldStorageAvailable": true,
+    "fleetSizeTrucks": 22,
+    "activeInboundShipments": 5,
+    "activeOutboundShipments": 7,
+    "managerName": "Amitabh Banerjee",
+    "contactPhone": "+91-97650-33019"
+  }
+]

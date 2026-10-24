@@ -1,0 +1,16 @@
+[
+  {
+    "id": "AUDIT-001",
+    "timestamp": "2026-10-24T14:13:30.095Z",
+    "action": "SYSTEM_INITIALIZATION",
+    "entity": "Database",
+    "details": "Loaded 20 products, 5 warehouses, 40 destinations, and 90-day demand records."
+  },
+  {
+    "id": "AUDIT-1792851769068",
+    "timestamp": "2026-10-24T14:22:49.068Z",
+    "action": "SHIPMENT_STATUS_CHANGE",
+    "entity": "Shipment",
+    "details": "Shipment SHP-2026-8893 updated to status 'Delivered'"
+  }
+]
