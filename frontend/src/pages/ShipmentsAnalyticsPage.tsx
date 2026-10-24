@@ -43,15 +43,16 @@ export const ShipmentsAnalyticsPage: React.FC<ShipmentsPageProps> = ({ selectedR
 
   useEffect(() => {
     fetchShipmentData();
-  }, []);
+  }, [selectedRegion]);
 
   const fetchShipmentData = async () => {
     try {
       setLoading(true);
+      const q = selectedRegion !== 'All' ? `?region=${selectedRegion}` : '';
       const [shpRes, whRes, destRes, routeRes] = await Promise.all([
-        fetch('/api/shipments'),
-        fetch('/api/warehouses'),
-        fetch('/api/forecast/destinations'),
+        fetch(`/api/shipments${q}`),
+        fetch(`/api/warehouses${q}`),
+        fetch(`/api/forecast/destinations${q}`),
         fetch('/api/shipments/routes-analytics')
       ]);
 
@@ -101,7 +102,7 @@ export const ShipmentsAnalyticsPage: React.FC<ShipmentsPageProps> = ({ selectedR
   const filteredShipments = shipments.filter(s => {
     if (statusFilter !== 'All' && s.status !== statusFilter) return false;
     if (coldChainOnly && !s.isColdChain) return false;
-    if (selectedRegion !== 'All' && s.region !== selectedRegion) return false;
+    if (selectedRegion !== 'All' && s.sourceRegion !== selectedRegion && s.destinationRegion !== selectedRegion && s.region !== selectedRegion) return false;
     const q = localSearch.toLowerCase();
     if (q) {
       const match =

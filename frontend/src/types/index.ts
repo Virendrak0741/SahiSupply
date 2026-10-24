@@ -236,6 +236,8 @@ export interface Shipment {
   destinationName: string;
   destinationType: string;
   region: string;
+  sourceRegion?: string;
+  destinationRegion?: string;
   productId: string;
   productName: string;
   category: ProductCategory;
