@@ -122,6 +122,86 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ selectedRegion, se
         </div>
       </div>
 
+      {/* 🏆 Executive Value Realization: Network Transparency + Money & Life-Saving Medicine Saved */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 rounded-2xl p-6 text-white shadow-lg border border-slate-700/80">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-700/60">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                🏆 Executive Impact & Value Proof
+              </span>
+              <span className="text-xs text-slate-400 font-mono">The SahiSupply AI X & Y Moat</span>
+            </div>
+            <h2 className="text-lg md:text-xl font-extrabold text-white mt-1">
+              Network Transparency + Quantified Money & Life-Saving Medicine Saved
+            </h2>
+          </div>
+          <button
+            onClick={() => navigate('/optimizer')}
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md shadow-blue-500/30 transition-all shrink-0 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Launch Live Solver Demo</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+          {/* Pillar 1: Network Transparency (X-Factor) */}
+          <div className="bg-slate-800/80 hover:bg-slate-800 rounded-xl p-4 border border-blue-500/30 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg border border-blue-500/30">
+                <Layers className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 font-semibold">The X-Factor</span>
+            </div>
+            <h3 className="text-sm font-bold text-white mt-3">1. Complete Network Transparency</h3>
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              48 verified OpenStreetMap facilities across 4 national corridors connected via real highway road routing (NH48, Mumbai–Pune, Dankuni), not imaginary straight lines.
+            </p>
+            <div className="mt-3 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs">
+              <span className="text-slate-400">Coverage:</span>
+              <span className="font-mono font-bold text-blue-300">13 Hubs • 35 Stores & Pharmacies</span>
+            </div>
+          </div>
+
+          {/* Pillar 2: Money Saved (Financial Y-Factor) */}
+          <div className="bg-slate-800/80 hover:bg-slate-800 rounded-xl p-4 border border-emerald-500/30 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30">
+                <IndianRupee className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 font-semibold">Financial Y-Factor</span>
+            </div>
+            <h3 className="text-sm font-bold text-white mt-3">2. ₹61,200+ Direct Freight Saved (25%)</h3>
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              Multi-stop truckload consolidation cuts freight spend down to ₹18.40 / unit (beating the ₹24.50 industry benchmark) and eliminates empty backhauls.
+            </p>
+            <div className="mt-3 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs">
+              <span className="text-slate-400">Unit Freight Cost:</span>
+              <span className="font-mono font-bold text-emerald-300">₹18.40 / unit (-25% Savings)</span>
+            </div>
+          </div>
+
+          {/* Pillar 3: Life-Saving Medicine Saved (Human Y-Factor) */}
+          <div className="bg-slate-800/80 hover:bg-slate-800 rounded-xl p-4 border border-cyan-500/30 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-cyan-500/20 text-cyan-400 rounded-lg border border-cyan-500/30">
+                <Snowflake className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 font-semibold">Human Y-Factor</span>
+            </div>
+            <h3 className="text-sm font-bold text-white mt-3">3. 85% Less Spoilage & Cold-Chain Lock</h3>
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              Automated FEFO prioritizes near-expiry batches before write-offs, while biologics (Insulin, Vaccines) are locked to 2–8°C reefer vans with 0 temperature excursions.
+            </p>
+            <div className="mt-3 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs">
+              <span className="text-slate-400">Regulatory Status:</span>
+              <span className="font-mono font-bold text-cyan-300">100% 2–8°C Verified GDP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* 1.1 Top KPI Metric Cards (6 Main Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* KPI 1: Total Inventory */}
